@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-serif-family: var(--font-newsreader), Newsreader, serif;
+    --font-sans-family: var(--font-plus-jakarta), "Plus Jakarta Sans", sans-serif;
+  }
+
+  /* Default Dark Theme Tokens */
+  :root, html.dark {
+    --bg-page: #000000;
+    --bg-surface: #111111;
+    --bg-card: #18181b;
+    --bg-card-hover: #1e1e24;
+    --border-card: #27272a;
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --nav-bg: rgba(0, 0, 0, 0.9);
+    --divider-glow: rgba(39, 39, 42, 0.8);
+    color-scheme: dark;
+  }
+
+  /* Light Theme Tokens */
+  html:not(.dark), html.light {
+    --bg-page: #F8FAFC;
+    --bg-surface: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f1f5f9;
+    --border-card: #e2e8f0;
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
+    --nav-bg: rgba(255, 255, 255, 0.9);
+    --divider-glow: rgba(226, 232, 240, 0.9);
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    font-family: var(--font-sans-family);
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, .font-editorial {
+    font-family: var(--font-serif-family);
+  }
+}
+
+/* Custom Design Tokens & Classes */
+.bg-page-theme {
+  background-color: var(--bg-page);
+}
+
+.bg-surface-theme {
+  background-color: var(--bg-surface);
+}
+
+.bg-card-theme {
+  background-color: var(--bg-card);
+}
+
+.border-theme {
+  border-color: var(--border-card);
+}
+
+.text-primary-theme {
+  color: var(--text-primary);
+}
+
+.text-secondary-theme {
+  color: var(--text-secondary);
+}
+
+.font-newsreader {
+  font-family: var(--font-serif-family);
+}
+
+.shadow-teal-glow {
+  box-shadow: 0px 4px 20px -2px rgba(24, 169, 153, 0.3);
+}
+
+/* Accessibility Focus-Visible Rules */
+.focus-accessible {
+  outline: none;
+}
+.focus-accessible:focus-visible {
+  outline: 2px solid #18A999;
+  outline-offset: 2px;
+}
+
+/* Sound Wave Animation - Uses transform scaleY to prevent layout reflow / height shifts */
+@keyframes wave-bar {
+  0%, 100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-wave-1 {
+  animation: wave-bar 1.2s infinite ease-in-out 0.1s;
+  transform-origin: center;
+  will-change: transform;
+}
+.animate-wave-2 {
+  animation: wave-bar 1.2s infinite ease-in-out 0.3s;
+  transform-origin: center;
+  will-change: transform;
+}
+.animate-wave-3 {
+  animation: wave-bar 1.2s infinite ease-in-out 0.2s;
+  transform-origin: center;
+  will-change: transform;
+}
+.animate-wave-4 {
+  animation: wave-bar 1.2s infinite ease-in-out 0.4s;
+  transform-origin: center;
+  will-change: transform;
+}
+.animate-wave-5 {
+  animation: wave-bar 1.2s infinite ease-in-out 0.15s;
+  transform-origin: center;
+  will-change: transform;
+}
+
+/* Subtle float */
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: subtle-float 4s infinite ease-in-out;
+}
+
+/* Premium Crisp Gridlines Background Pattern */
+.bg-grid-pattern {
+  background-size: 44px 44px;
+  background-image: 
+    linear-gradient(to right, rgba(15, 76, 92, 0.12) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, rgba(15, 76, 92, 0.12) 1.5px, transparent 1.5px);
+}
+
+html.dark .bg-grid-pattern, .dark .bg-grid-pattern,
+html.dark .bg-grid-dark, .dark .bg-grid-dark {
+  background-size: 44px 44px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px);
+}
