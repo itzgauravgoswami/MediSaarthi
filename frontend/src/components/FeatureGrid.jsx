@@ -1,6 +1,5 @@
-"use client";
-
 import { motion } from "framer-motion";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   Mic,
   Languages,
@@ -17,87 +16,89 @@ import {
 } from "lucide-react";
 
 export default function FeatureGrid() {
+  const { t, language } = useLanguage();
+
   const features = [
     {
-      title: "Voice-First AI",
-      desc: "Patients can speak naturally in their native language instead of struggling to type on complex digital forms.",
+      title: language === 'hi' ? "वॉयस-फर्स्ट एआई" : "Voice-First AI",
+      desc: language === 'hi' ? "मरीज जटिल डिजिटल फॉर्म भरने के बजाय अपनी मातृभाषा में स्वाभाविक रूप से बोल सकते हैं।" : "Patients can speak naturally in their native language instead of struggling to type on complex digital forms.",
       icon: Mic,
       tag: "Accessibility",
       color: "text-[#18A999] bg-[#18A999]/10 border-[#18A999]/20",
     },
     {
-      title: "Multilingual Engine",
-      desc: "Native support for Hindi & English, architected for regional Indian dialects and acoustic variations.",
+      title: language === 'hi' ? "बहुभाषी इंजन" : "Multilingual Engine",
+      desc: language === 'hi' ? "हिंदी और अंग्रेजी के लिए समर्थन, क्षेत्रीय भारतीय बोलियों के लिए डिज़ाइन किया गया।" : "Native support for Hindi & English, architected for regional Indian dialects and acoustic variations.",
       icon: Languages,
       tag: "Inclusion",
       color: "text-[#0F4C5C] dark:text-[#18A999] bg-[#0F4C5C]/10 border-[#0F4C5C]/20",
     },
     {
-      title: "Voice + Touch Controls",
-      desc: "Dual interaction mode allowing patients to tap visual icons, sliders, or speak answers naturally.",
+      title: language === 'hi' ? "वॉयस + टच नियंत्रण" : "Voice + Touch Controls",
+      desc: language === 'hi' ? "दोहरा मोड जो मरीजों को विजुअल आइकॉन टैप करने या बोलकर उत्तर देने की सुविधा देता है।" : "Dual interaction mode allowing patients to tap visual icons, sliders, or speak answers naturally.",
       icon: MousePointerClick,
       tag: "Kiosk Ready",
       color: "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/40",
     },
     {
-      title: "Adaptive Questioning",
-      desc: "Intelligent clinical branching that adapts questions in real-time based on chief complaint and previous responses.",
+      title: language === 'hi' ? "अनुकूलनीय पूछताछ" : "Adaptive Questioning",
+      desc: language === 'hi' ? "बुद्धिमान नैदानिक शाखाएं जो मुख्य समस्या के आधार पर प्रश्नों को वास्तविक समय में समायोजित करती हैं।" : "Intelligent clinical branching that adapts questions in real-time based on chief complaint and previous responses.",
       icon: Brain,
       tag: "Clinical AI",
       color: "text-[#6366F1] bg-[#6366F1]/10 border-[#6366F1]/20",
     },
     {
-      title: "Medical Document Intelligence",
-      desc: "High-accuracy OCR extracts dosages, lab parameters, and diagnoses from physical prescriptions and lab sheets.",
+      title: language === 'hi' ? "मेडिकल दस्तावेज़ इंटेलिजेंस" : "Medical Document Intelligence",
+      desc: language === 'hi' ? "उच्च-सटीक ओसीआर भौतिक पर्चे और लैब शीट से खुराक और निदान निकालता है।" : "High-accuracy OCR extracts dosages, lab parameters, and diagnoses from physical prescriptions and lab sheets.",
       icon: FileSearch,
       tag: "OCR Engine",
       color: "text-[#18A999] bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/40",
     },
     {
-      title: "Structured Clinical History",
-      desc: "Generates standardized notes covering HPI, Past Medical, Surgical, Medications, Allergies, Family & Systemic Review.",
+      title: language === 'hi' ? "संरचित क्लिनिकल इतिहास" : "Structured Clinical History",
+      desc: language === 'hi' ? "एचपीआई, पिछला चिकित्सा इतिहास, दवाएं, एलर्जी और पारिवारिक समीक्षा को कवर करने वाले नोट बनाता है।" : "Generates standardized notes covering HPI, Past Medical, Surgical, Medications, Allergies, Family & Systemic Review.",
       icon: ClipboardList,
       tag: "EHR Ready",
       color: "text-[#0F4C5C] dark:text-white bg-slate-100 dark:bg-[#18181b] border-slate-200 dark:border-[#27272a]",
     },
     {
-      title: "Red-Flag Detection",
-      desc: "Algorithmic screening surfaces critical alerts (chest pain, severe dyspnea, acute neuro symptoms) to triage staff.",
+      title: language === 'hi' ? "रेड-फ्लैग पहचान" : "Red-Flag Detection",
+      desc: language === 'hi' ? "एल्गोरिदमिक स्क्रीनिंग ट्राइएज स्टाफ के लिए महत्वपूर्ण आपातकालीन अलर्ट (सीने का दर्द, सांस की तकलीफ) दिखाती है।" : "Algorithmic screening surfaces critical alerts (chest pain, severe dyspnea, acute neuro symptoms) to triage staff.",
       icon: Siren,
       tag: "Safety Triage",
       color: "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/40",
     },
     {
-      title: "Medical Timeline",
-      desc: "Automatically reconstructs longitudinal health history into a visual, searchable chronological timeline.",
+      title: language === 'hi' ? "मेडिकल टाइमलाइन" : "Medical Timeline",
+      desc: language === 'hi' ? "स्वास्थ्य इतिहास को एक दृश्यमान, खोज योग्य कालानुक्रमिक समयरेखा में पुनर्गठित करता है।" : "Automatically reconstructs longitudinal health history into a visual, searchable chronological timeline.",
       icon: History,
       tag: "Continuity",
       color: "text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800/40",
     },
     {
-      title: "AYUSH Mode",
-      desc: "Supports Ayurvedic clinical history workflows including Dashavidha Pariksha, Prakriti, and Ahara-Vihara assessment.",
+      title: language === 'hi' ? "आयुष मोड" : "AYUSH Mode",
+      desc: language === 'hi' ? "दशविध परीक्षा, प्रकृति और आहार-विहार मूल्यांकन सहित आयुर्वेदिक कार्यप्रवाह का समर्थन करता है।" : "Supports Ayurvedic clinical history workflows including Dashavidha Pariksha, Prakriti, and Ahara-Vihara assessment.",
       icon: Sprout,
       tag: "AYUSH Integration",
       color: "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40",
     },
     {
-      title: "Physician Control",
-      desc: "Doctors maintain 100% oversight—with 1-click edit, approve, reject, or append capabilities before saving.",
+      title: language === 'hi' ? "चिकित्सक नियंत्रण" : "Physician Control",
+      desc: language === 'hi' ? "डॉक्टरों के पास 100% नियंत्रण रहता है—सहेजने से पहले 1-क्लिक संपादन, अनुमोदन या अस्वीकार करने की क्षमता के साथ।" : "Doctors maintain 100% oversight—with 1-click edit, approve, reject, or append capabilities before saving.",
       icon: UserCheck,
       tag: "Human Oversight",
       color: "text-[#0F4C5C] dark:text-[#18A999] bg-[#0F4C5C]/10 border-[#0F4C5C]/20",
     },
     {
-      title: "Consent & Privacy",
-      desc: "Explicit patient consent flows, session isolation, role-based access, and encrypted transport protocols.",
+      title: language === 'hi' ? "सहमति और गोपनीयता" : "Consent & Privacy",
+      desc: language === 'hi' ? "मरीज सहमति प्रवाह, सत्र अलगाव, भूमिका आधारित पहुंच और एन्क्रिप्टेड प्रोटोकॉल।" : "Explicit patient consent flows, session isolation, role-based access, and encrypted transport protocols.",
       icon: ShieldCheck,
       tag: "Data Security",
       color: "text-indigo-700 dark:text-[#C5A059] bg-indigo-50 dark:bg-[#C5A059]/10 border-indigo-200 dark:border-[#C5A059]/30",
     },
     {
-      title: "Interoperability (FHIR/ABDM)",
-      desc: "Built on HL7 FHIR standards for seamless integration with existing hospital management systems and ABDM.",
+      title: language === 'hi' ? "इंटरऑपरेबिलिटी (FHIR/ABDM)" : "Interoperability (FHIR/ABDM)",
+      desc: language === 'hi' ? "अस्पताल प्रबंधन प्रणालियों और ABDM के साथ एकीकरण के लिए HL7 FHIR मानकों पर निर्मित।" : "Built on HL7 FHIR standards for seamless integration with existing hospital management systems and ABDM.",
       icon: Share2,
       tag: "Open Standards",
       color: "text-[#18A999] bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/40",

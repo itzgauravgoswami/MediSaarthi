@@ -1,10 +1,14 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mic, Volume2, Globe, Sparkles, Languages, Check } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function VoiceShowcase() {
-  const [selectedLang, setSelectedLang] = useState("हिन्दी");
+  const { language, t } = useLanguage();
+  const [selectedLang, setSelectedLang] = useState(language === 'hi' ? "हिन्दी" : "English");
+
+  useEffect(() => {
+    setSelectedLang(language === 'hi' ? "हिन्दी" : "English");
+  }, [language]);
 
   const languages = [
     { code: "hi", name: "हिन्दी" },

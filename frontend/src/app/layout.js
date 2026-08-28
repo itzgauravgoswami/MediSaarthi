@@ -1,10 +1,19 @@
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Newsreader } from "next/font/google";
+import Providers from "@/components/Providers";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-plus-jakarta",
+  display: "swap",
+});
+
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-newsreader",
   display: "swap",
 });
 
@@ -33,9 +42,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${plusJakarta.variable} dark scroll-smooth antialiased`} data-theme="dark">
+    <html lang="en" className={`${plusJakarta.variable} ${newsreader.variable} dark scroll-smooth antialiased`} data-theme="dark">
       <body className="min-h-screen flex flex-col bg-page-theme text-primary-theme transition-colors duration-300 selection:bg-[#18A999]/30 selection:text-white">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

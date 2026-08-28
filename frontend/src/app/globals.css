@@ -8,22 +8,22 @@
     --font-sans-family: var(--font-plus-jakarta), "Plus Jakarta Sans", sans-serif;
   }
 
-  /* Default Dark Theme Tokens */
+  /* Default Dark Theme Tokens - Pure OLED Black & Signature Teal */
   :root, html.dark {
     --bg-page: #000000;
-    --bg-surface: #111111;
-    --bg-card: #18181b;
-    --bg-card-hover: #1e1e24;
+    --bg-surface: #000000;
+    --bg-card: #000000;
+    --bg-card-hover: #111111;
     --border-card: #27272a;
     --text-primary: #ffffff;
     --text-secondary: #a1a1aa;
     --text-muted: #71717a;
-    --nav-bg: rgba(0, 0, 0, 0.9);
-    --divider-glow: rgba(39, 39, 42, 0.8);
+    --nav-bg: rgba(0, 0, 0, 0.95);
+    --divider-glow: rgba(24, 169, 153, 0.6);
     color-scheme: dark;
   }
 
-  /* Light Theme Tokens */
+  /* Light Theme Tokens - Crisp Slate #F8FAFC & #0F172A Primary Text */
   html:not(.dark), html.light {
     --bg-page: #F8FAFC;
     --bg-surface: #ffffff;
@@ -33,7 +33,7 @@
     --text-primary: #0F172A;
     --text-secondary: #475569;
     --text-muted: #64748B;
-    --nav-bg: rgba(255, 255, 255, 0.9);
+    --nav-bg: rgba(255, 255, 255, 0.95);
     --divider-glow: rgba(226, 232, 240, 0.9);
     color-scheme: light;
   }
@@ -48,7 +48,7 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  h1, h2, h3, .font-editorial {
+  h1, h2, h3, .font-editorial, .font-newsreader {
     font-family: var(--font-serif-family);
   }
 }
@@ -83,7 +83,7 @@
 }
 
 .shadow-teal-glow {
-  box-shadow: 0px 4px 20px -2px rgba(24, 169, 153, 0.3);
+  box-shadow: 0px 4px 20px -2px rgba(24, 169, 153, 0.35);
 }
 
 /* Accessibility Focus-Visible Rules */
@@ -95,7 +95,7 @@
   outline-offset: 2px;
 }
 
-/* Sound Wave Animation - Uses transform scaleY to prevent layout reflow / height shifts */
+/* Sound Wave Animation - Uses transform scaleY to prevent layout reflow */
 @keyframes wave-bar {
   0%, 100% {
     transform: scaleY(0.3);
@@ -149,8 +149,7 @@
     linear-gradient(to bottom, rgba(15, 76, 92, 0.12) 1.5px, transparent 1.5px);
 }
 
-html.dark .bg-grid-pattern, .dark .bg-grid-pattern,
-html.dark .bg-grid-dark, .dark .bg-grid-dark {
+html.dark .bg-grid-pattern, .dark .bg-grid-pattern {
   background-size: 44px 44px;
   background-image: 
     linear-gradient(to right, rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px),

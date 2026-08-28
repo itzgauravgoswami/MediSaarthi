@@ -1,8 +1,9 @@
-"use client";
-
 import { FileText, ArrowRight, CheckCircle2, AlertTriangle, Cpu, ShieldAlert, Sparkles } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function DocumentShowcase() {
+  const { t, language } = useLanguage();
+
   return (
     <section id="document-ai" className="relative py-24 overflow-hidden bg-[#F8FAFC] dark:bg-black text-[#0F172A] dark:text-white transition-colors duration-300">
       {/* Background ambient lighting */}
@@ -23,13 +24,13 @@ export default function DocumentShowcase() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <span className="inline-block px-3.5 py-1.5 rounded-full bg-[#18A999]/10 dark:bg-black text-[#0F4C5C] dark:text-[#18A999] text-xs font-bold uppercase tracking-wider border border-[#18A999]/20 dark:border-[#27272a]">
-            INTELLIGENT OCR & PARSING
+            {t("docBadge", "INTELLIGENT OCR & PARSING")}
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F172A] dark:text-white tracking-tight font-newsreader">
-            Turn paper prescriptions & lab reports into structured data.
+            {t("docTitle", "Turn paper prescriptions & lab reports into structured data.")}
           </h2>
           <p className="text-slate-600 dark:text-[#a1a1aa] text-base sm:text-lg">
-            MediSaarthi scans physical documents using medical-grade OCR, extracts key parameters, flags abnormal values, and incorporates findings directly into the physician timeline.
+            {t("docSubtitle", "Instant extraction of handwritten doctor notes, medicine dosages, lab values, and diagnostic findings.")}
           </p>
         </div>
 

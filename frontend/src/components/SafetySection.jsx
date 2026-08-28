@@ -1,26 +1,27 @@
-"use client";
-
 import { ShieldCheck, UserCheck, AlertTriangle, Eye, FileCheck, Stethoscope } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function SafetySection() {
+  const { t, language } = useLanguage();
+
   const safetyPrinciples = [
     {
-      title: "No Autonomous Diagnosis",
-      desc: "MediSaarthi never renders autonomous medical diagnoses or prescribes medication. The AI's sole role is to collect, translate, and organize patient-provided history.",
+      title: language === 'hi' ? "कोई स्वायत्त निदान नहीं" : "No Autonomous Diagnosis",
+      desc: language === 'hi' ? "मेडीसारथी कभी भी स्वायत्त चिकित्सा निदान नहीं देता या दवाएं नहीं लिखता है। एआई की एकमात्र भूमिका मरीज के इतिहास को एकत्र, अनुवाद और व्यवस्थित करना है।" : "MediSaarthi never renders autonomous medical diagnoses or prescribes medication. The AI's sole role is to collect, translate, and organize patient-provided history.",
       icon: Eye,
       color: "border-amber-200 dark:border-amber-800/40 bg-amber-50/50 dark:bg-black text-amber-900 dark:text-amber-300",
       badge: "Non-Diagnostic AI",
     },
     {
-      title: "Mandatory Human Verification",
-      desc: "Doctors review, edit, approve, or discard any AI-generated summary before it is signed into the hospital's official Electronic Health Record.",
+      title: language === 'hi' ? "अनिवार्य मानवीय सत्यापन" : "Mandatory Human Verification",
+      desc: language === 'hi' ? "अस्पताल के आधिकारिक इलेक्ट्रॉनिक स्वास्थ्य रिकॉर्ड में हस्ताक्षर करने से पहले डॉक्टर किसी भी एआई-जनरेट सारांश की समीक्षा, संपादन, अनुमोदन या उसे खारिज करते हैं।" : "Doctors review, edit, approve, or discard any AI-generated summary before it is signed into the hospital's official Electronic Health Record.",
       icon: UserCheck,
       color: "border-[#0F4C5C]/30 dark:border-[#27272a] bg-[#0F4C5C]/5 dark:bg-black text-[#0F4C5C] dark:text-white",
       badge: "Physician-in-the-Loop",
     },
     {
-      title: "Red-Flag Triage Escalation",
-      desc: "Critical symptoms (acute chest pain, stroke signs, severe hemorrhage) bypass routine intake and trigger high-priority alerts to hospital triage staff.",
+      title: language === 'hi' ? "रेड-फ्लैग ट्राइएज एस्केलेशन" : "Red-Flag Triage Escalation",
+      desc: language === 'hi' ? "गंभीर लक्षण (सीने में तेज दर्द, स्ट्रोक के लक्षण, गंभीर रक्तस्राव) रूटीन इंटेक को दरकिनार करते हैं और अस्पताल के ट्राइएज कर्मचारियों को उच्च प्राथमिकता अलर्ट भेजते हैं।" : "Critical symptoms (acute chest pain, stroke signs, severe hemorrhage) bypass routine intake and trigger high-priority alerts to hospital triage staff.",
       icon: AlertTriangle,
       color: "border-rose-200 dark:border-rose-800/40 bg-rose-50/50 dark:bg-black text-rose-900 dark:text-rose-300",
       badge: "Emergency Safety",

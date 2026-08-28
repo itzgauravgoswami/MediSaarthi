@@ -1,22 +1,23 @@
-"use client";
-
 import { motion } from "framer-motion";
 import { Flower2, Leaf, Sparkles, CheckCircle2, HeartPulse, Stethoscope } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AyushSection() {
+  const { t, language } = useLanguage();
+
   const ayushParameters = [
-    { name: "Prakriti", category: "Dosha Constitution", desc: "Vata, Pitta, Kapha bio-energetic baseline assessment" },
-    { name: "Vikriti", category: "Imbalance State", desc: "Current pathophysiological state and dosha aggravation" },
-    { name: "Sara", category: "Tissue Excellence", desc: "Qualitative evaluation of Dhatus (Rasa to Sukra)" },
-    { name: "Samhanana", category: "Compactness", desc: "Assessment of physical build and structural integrity" },
-    { name: "Pramana", category: "Anthropometry", desc: "Body proportion and physical measurement ratios" },
-    { name: "Satmya", category: "Adaptability", desc: "Habituation and suitability of diet & environment" },
-    { name: "Sattva", category: "Mental Strength", desc: "Psychological resilience (Pravara, Madhyama, Avara)" },
-    { name: "Ahara Shakti", category: "Digestive Capacity", desc: "Abhyavaharana & Jarana Shakti evaluation (Agni)" },
-    { name: "Vyayama Shakti", category: "Physical Capacity", desc: "Work capacity and exercise tolerance metrics" },
-    { name: "Vaya", category: "Age Assessment", desc: "Chronological vs biological age classification" },
-    { name: "Ahara", category: "Dietary Habits", desc: "Rasa, Guna, Virya food preference & pattern history" },
-    { name: "Vihara", category: "Lifestyle & Regimen", desc: "Dinacharya, Ritucharya, sleep and activity patterns" },
+    { name: "Prakriti", category: "Dosha Constitution", desc: language === 'hi' ? "वात, पित्त, कफ प्रकृति मूल्यांकन" : "Vata, Pitta, Kapha bio-energetic baseline assessment" },
+    { name: "Vikriti", category: "Imbalance State", desc: language === 'hi' ? "वर्तमान दोष स्थिति और असंतुलन मूल्यांकन" : "Current pathophysiological state and dosha aggravation" },
+    { name: "Sara", category: "Tissue Excellence", desc: language === 'hi' ? "धातुओं की गुणवत्ता और उत्कृष्टता का मूल्यांकन" : "Qualitative evaluation of Dhatus (Rasa to Sukra)" },
+    { name: "Samhanana", category: "Compactness", desc: language === 'hi' ? "शरीर की बनावट और संरचनात्मक मजबूती" : "Assessment of physical build and structural integrity" },
+    { name: "Pramana", category: "Anthropometry", desc: language === 'hi' ? "शारीरिक अनुपात और माप विश्लेषण" : "Body proportion and physical measurement ratios" },
+    { name: "Satmya", category: "Adaptability", desc: language === 'hi' ? "आहार और वातावरण की अनुकूलता" : "Habituation and suitability of diet & environment" },
+    { name: "Sattva", category: "Mental Strength", desc: language === 'hi' ? "मानसिक शक्ति और मनोबल मूल्यांकन" : "Psychological resilience (Pravara, Madhyama, Avara)" },
+    { name: "Ahara Shakti", category: "Digestive Capacity", desc: language === 'hi' ? "पाचन क्षमता और अग्नि मूल्यांकन" : "Abhyavaharana & Jarana Shakti evaluation (Agni)" },
+    { name: "Vyayama Shakti", category: "Physical Capacity", desc: language === 'hi' ? "शारीरिक क्षमता और व्यायाम सहनशीलता" : "Work capacity and exercise tolerance metrics" },
+    { name: "Vaya", category: "Age Assessment", desc: language === 'hi' ? "आयु और अवस्था वर्गीकरण" : "Chronological vs biological age classification" },
+    { name: "Ahara", category: "Dietary Habits", desc: language === 'hi' ? "आहार संबंधी आदतें और भोजन की प्राथमिकता" : "Rasa, Guna, Virya food preference & pattern history" },
+    { name: "Vihara", category: "Lifestyle & Regimen", desc: language === 'hi' ? "दिनचर्या, ऋतुचर्या और जीवन शैली पैटर्न" : "Dinacharya, Ritucharya, sleep and activity patterns" },
   ];
 
   return (

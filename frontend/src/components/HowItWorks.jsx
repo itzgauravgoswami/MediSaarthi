@@ -1,51 +1,52 @@
-"use client";
-
 import { motion } from "framer-motion";
 import { UserCheck, MessageSquare, ScanLine, Cpu, Stethoscope, ArrowRight } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function HowItWorks() {
+  const { t, language } = useLanguage();
+
   const steps = [
     {
       num: "01",
-      title: "Identify",
-      subtitle: "Language & Consent",
-      desc: "Patient selects preferred language (Hindi, English, Regional) and provides digital consent.",
+      title: language === 'hi' ? "पहचान" : "Identify",
+      subtitle: language === 'hi' ? "भाषा और सहमति" : "Language & Consent",
+      desc: language === 'hi' ? "मरीज पसंदीदा भाषा चुनता है और डिजिटल सहमति प्रदान करता है।" : "Patient selects preferred language (Hindi, English, Regional) and provides digital consent.",
       icon: UserCheck,
       color: "from-teal-500 to-[#0F4C5C]",
       badge: "Kiosk / Mobile QR",
     },
     {
       num: "02",
-      title: "Converse",
-      subtitle: "Voice + Touch Interview",
-      desc: "AI conducts an interactive voice & touch inquiry to capture chief complaint, HPI, and past history.",
+      title: language === 'hi' ? "बातचीत" : "Converse",
+      subtitle: language === 'hi' ? "वॉयस + स्पर्श साक्षात्कार" : "Voice + Touch Interview",
+      desc: language === 'hi' ? "एआई मुख्य लक्षण और इतिहास कैप्चर करने के लिए आवाज और स्पर्श पूछताछ करता है।" : "AI conducts an interactive voice & touch inquiry to capture chief complaint, HPI, and past history.",
       icon: MessageSquare,
       color: "from-[#0F4C5C] to-[#6366F1]",
       badge: "Multilingual AI",
     },
     {
       num: "03",
-      title: "Scan",
-      subtitle: "Medical Document Intelligence",
-      desc: "Patient scans or uploads physical prescriptions, discharge summaries, and diagnostic lab reports.",
+      title: language === 'hi' ? "स्कैन" : "Scan",
+      subtitle: language === 'hi' ? "मेडिकल दस्तावेज़ इंटेलिजेंस" : "Medical Document Intelligence",
+      desc: language === 'hi' ? "मरीज पुराने पर्चे, डिस्चार्ज सारांश और लैब रिपोर्ट स्कैन या अपलोड करता है।" : "Patient scans or uploads physical prescriptions, discharge summaries, and diagnostic lab reports.",
       icon: ScanLine,
       color: "from-[#6366F1] to-[#18A999]",
       badge: "OCR & Vision AI",
     },
     {
       num: "04",
-      title: "Structure",
-      subtitle: "Timeline & Red-Flag Triage",
-      desc: "AI automatically structures clinical entities, flags emergency symptoms, and creates chronological history.",
+      title: language === 'hi' ? "संरचना" : "Structure",
+      subtitle: language === 'hi' ? "टाइमलाइन और रेड-फ्लैग ट्राइएज" : "Timeline & Red-Flag Triage",
+      desc: language === 'hi' ? "एआई स्वचालित रूप से आपातकालीन लक्षणों को फ्लैग करता है और कालानुक्रमिक इतिहास बनाता है।" : "AI automatically structures clinical entities, flags emergency symptoms, and creates chronological history.",
       icon: Cpu,
       color: "from-[#18A999] to-emerald-500",
       badge: "FHIR Timeline",
     },
     {
       num: "05",
-      title: "Review",
-      subtitle: "Physician Control",
-      desc: "Doctor reviews pre-populated history before consultation, with full capability to edit, confirm, or add notes.",
+      title: language === 'hi' ? "समीक्षा" : "Review",
+      subtitle: language === 'hi' ? "चिकित्सक नियंत्रण" : "Physician Control",
+      desc: language === 'hi' ? "डॉक्टर परामर्श से पहले पूर्व-जनरेट इतिहास की समीक्षा करता है।" : "Doctor reviews pre-populated history before consultation, with full capability to edit, confirm, or add notes.",
       icon: Stethoscope,
       color: "from-emerald-500 to-[#0F4C5C]",
       badge: "Physician Verification",

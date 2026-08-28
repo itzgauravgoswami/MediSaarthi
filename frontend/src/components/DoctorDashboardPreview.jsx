@@ -1,10 +1,10 @@
-"use client";
-
 import { useState } from "react";
 import { Siren, Check, Edit3, User, Calendar, Stethoscope, AlertTriangle, FileCheck, ArrowRight, ShieldCheck } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function DoctorDashboardPreview() {
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const { t, language } = useLanguage();
 
   return (
     <section className="relative py-24 overflow-hidden bg-[#F8FAFC] dark:bg-black text-[#0F172A] dark:text-white transition-colors duration-300">
@@ -29,10 +29,10 @@ export default function DoctorDashboardPreview() {
             PHYSICIAN DECISION INTERFACE
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F172A] dark:text-white tracking-tight font-newsreader">
-            Complete patient case, ready before you say hello.
+            {language === 'hi' ? "पूरा रोगी मामला, नमस्कार कहने से पहले तैयार।" : "Complete patient case, ready before you say hello."}
           </h2>
           <p className="text-slate-600 dark:text-[#a1a1aa] text-base sm:text-lg">
-            Instead of spending the first 10 minutes typing background notes, physicians open a structured pre-consultation summary ready for clinical review.
+            {language === 'hi' ? "शुरुआती 10 मिनट टाइपिंग करने के बजाय, चिकित्सक एक संरचित सारांश समीक्षा के लिए खोलते हैं।" : "Instead of spending the first 10 minutes typing background notes, physicians open a structured pre-consultation summary ready for clinical review."}
           </p>
         </div>
 

@@ -1,48 +1,49 @@
-"use client";
-
 import { motion } from "framer-motion";
 import { Languages, Mic, Cpu, Flower2, Network, ShieldCheck, Sparkles } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function TrustBar() {
+  const { t, language } = useLanguage();
+
   const trustPillars = [
     {
-      title: "Multilingual Voice",
-      desc: "10+ Indian Languages",
+      title: language === 'hi' ? "बहुभाषी वॉयस" : "Multilingual Voice",
+      desc: language === 'hi' ? "10+ भारतीय भाषाएं" : "10+ Indian Languages",
       icon: Languages,
       color: "text-[#0F4C5C] dark:text-[#18A999]",
       bg: "bg-[#0F4C5C]/10 dark:bg-[#18A999]/10 border-[#0F4C5C]/20 dark:border-[#18A999]/30",
     },
     {
-      title: "Voice-First Intake",
-      desc: "Low-Literacy Accessible",
+      title: language === 'hi' ? "वॉयस-फर्स्ट इंटेक" : "Voice-First Intake",
+      desc: language === 'hi' ? "सुलभ और आसान" : "Low-Literacy Accessible",
       icon: Mic,
       color: "text-[#18A999]",
       bg: "bg-[#18A999]/10 border-[#18A999]/20 dark:border-[#18A999]/30",
     },
     {
-      title: "Adaptive Clinical AI",
-      desc: "Dynamic Questioning",
+      title: language === 'hi' ? "अनुकूलनीय क्लिनिकल एआई" : "Adaptive Clinical AI",
+      desc: language === 'hi' ? "डायनामिक पूछताछ" : "Dynamic Questioning",
       icon: Cpu,
       color: "text-[#6366F1]",
       bg: "bg-[#6366F1]/10 border-[#6366F1]/20 dark:border-[#6366F1]/30",
     },
     {
-      title: "AYUSH Workflows",
-      desc: "Dashavidha Pariksha",
+      title: language === 'hi' ? "आयुष कार्यप्रवाह" : "AYUSH Workflows",
+      desc: language === 'hi' ? "दशविध परीक्षा" : "Dashavidha Pariksha",
       icon: Flower2,
       color: "text-emerald-600 dark:text-emerald-400",
       bg: "bg-emerald-500/10 border-emerald-500/20 dark:border-emerald-500/30",
     },
     {
-      title: "FHIR & ABDM Ready",
-      desc: "Interoperable EMR Data",
+      title: language === 'hi' ? "FHIR और ABDM रेडी" : "FHIR & ABDM Ready",
+      desc: language === 'hi' ? "इंटरऑपरेबल ईएमआर डेटा" : "Interoperable EMR Data",
       icon: Network,
       color: "text-sky-600 dark:text-sky-400",
       bg: "bg-sky-500/10 border-sky-500/20 dark:border-sky-500/30",
     },
     {
-      title: "Consent & Privacy",
-      desc: "End-to-End Encrypted",
+      title: language === 'hi' ? "सहमति और गोपनीयता" : "Consent & Privacy",
+      desc: language === 'hi' ? "सुरक्षित और एन्क्रिप्टेड" : "End-to-End Encrypted",
       icon: ShieldCheck,
       color: "text-indigo-600 dark:text-[#C5A059]",
       bg: "bg-indigo-500/10 dark:bg-[#C5A059]/10 border-indigo-500/20 dark:border-[#C5A059]/30",
