@@ -2,6 +2,7 @@
 const app = require('./app');
 const config = require('./config/env');
 const { connectDB } = require('./config/database');
+const { startKeepAlive, stopKeepAlive } = require('./services/keepAlive.service');
 const logger = require('./utils/logger');
 
 async function startServer() {
@@ -12,11 +13,15 @@ async function startServer() {
     logger.info(`[MediSaarthi Backend] Running in '${config.env}' mode on port ${config.port}`);
     logger.info(`[MediSaarthi Backend] Primary API: http://localhost:${config.port}/api/v1`);
     logger.info(`[MediSaarthi Backend] Health check: http://localhost:${config.port}/api/v1/health`);
+
+    // Start keep-alive auto-pinger to prevent cloud hosts from sleeping
+    startKeepAlive();
   });
 
   // Graceful shutdown handling
   const shutdown = () => {
     logger.info('[MediSaarthi Backend] Shutting down gracefully...');
+    stopKeepAlive();
     server.close(() => {
       logger.info('[MediSaarthi Backend] Closed out remaining connections.');
       process.exit(0);

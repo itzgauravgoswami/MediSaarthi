@@ -70,6 +70,12 @@ const config = {
     baseUrl: process.env.FHIR_BASE_URL || (process.env.NODE_ENV === 'production' 
       ? 'https://medisaarthi-api.onrender.com/api/v1/fhir' 
       : 'http://localhost:5000/api/v1/fhir')
+  },
+
+  keepAlive: {
+    enabled: process.env.KEEP_ALIVE_ENABLED !== 'false',
+    url: process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL || process.env.KEEP_ALIVE_URL || '',
+    intervalMs: parseInt(process.env.KEEP_ALIVE_INTERVAL_MS, 10) || 12 * 60 * 1000
   }
 };
 
