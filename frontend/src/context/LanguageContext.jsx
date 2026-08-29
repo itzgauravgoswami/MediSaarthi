@@ -13,6 +13,7 @@ export const translations = {
   en: {
     // Nav & Common
     home: "Home",
+    doctors: "Doctors",
     howItWorks: "How It Works",
     features: "Features",
     voiceAi: "Voice AI",
@@ -120,6 +121,7 @@ export const translations = {
   hi: {
     // Nav & Common
     home: "होम",
+    doctors: "चिकित्सक",
     howItWorks: "यह कैसे काम करता है",
     features: "विशेषताएं",
     voiceAi: "वॉइस एआई",

@@ -152,7 +152,7 @@ export default function PatientDetailPage({ params: paramsPromise }) {
             <h3 className="font-bold text-base text-slate-900 dark:text-white">Prescribed Medications</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {patient.medicationHistory?.map((m, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 space-y-1">
+                <div key={m.name ? `${m.name}-${i}` : `med-${i}`} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 space-y-1">
                   <span className="font-bold text-sm text-slate-900 dark:text-white block">{m.name}</span>
                   <span className="text-xs text-slate-600 dark:text-slate-300 block">{m.dosage} • {m.frequency}</span>
                   <span className="text-[10px] text-slate-400 block italic">Source: {m.source}</span>
@@ -167,7 +167,7 @@ export default function PatientDetailPage({ params: paramsPromise }) {
             <h3 className="font-bold text-base text-slate-900 dark:text-white">Laboratory Investigations</h3>
             <div className="space-y-2">
               {patient.previousInvestigations?.map((inv, i) => (
-                <div key={i} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 flex justify-between items-center">
+                <div key={inv.test ? `${inv.test}-${inv.date}-${i}` : `inv-${i}`} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 flex justify-between items-center">
                   <div>
                     <span className="font-bold text-xs text-slate-900 dark:text-white block">{inv.test}</span>
                     <span className="text-[10px] text-slate-400">{inv.date}</span>

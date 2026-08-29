@@ -106,19 +106,19 @@ export default function AyushWorkspacePage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                      <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-xs">
                         {val}
                       </span>
-                      {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                      {isOpen ? <ChevronUp className="w-4 h-4 text-slate-500 dark:text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400" />}
                     </div>
                   </button>
 
                   {isOpen && (
-                    <div className="p-5 bg-white dark:bg-black border-t border-slate-100 dark:border-[#27272a] text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                      <strong className="text-slate-900 dark:text-white block mb-1 font-newsreader">Clinical Observation & Notes:</strong>
-                      <p className="p-3 rounded-2xl bg-emerald-950/30 border border-emerald-900/60 text-emerald-200 font-medium">
+                    <div className="p-5 bg-white dark:bg-black border-t border-slate-200 dark:border-[#27272a] text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-2">
+                      <strong className="text-slate-900 dark:text-white block font-newsreader text-sm">Clinical Observation & Notes:</strong>
+                      <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-100 font-semibold shadow-xs">
                         {val}
-                      </p>
+                      </div>
                     </div>
                   )}
                 </div>

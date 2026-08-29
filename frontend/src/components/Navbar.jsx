@@ -26,29 +26,30 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
-    { name: t("home", "Home"), href: "#hero" },
-    { name: t("howItWorks", "How It Works"), href: "#how-it-works" },
-    { name: t("features", "Features"), href: "#features" },
-    { name: t("voiceAi", "Voice AI"), href: "#voice-ai" },
-    { name: t("documentAi", "Document AI"), href: "#document-ai" },
-    { name: t("ayush", "AYUSH"), href: "#ayush" },
-    { name: t("safety", "Safety"), href: "#safety" },
-    { name: t("faqs", "FAQs"), href: "#faqs" },
+    { name: t("home", "Home"), href: "/#hero" },
+    { name: t("doctors", "Doctors"), href: "/doctors" },
+    { name: t("howItWorks", "How It Works"), href: "/#how-it-works" },
+    { name: t("features", "Features"), href: "/#features" },
+    { name: t("voiceAi", "Voice AI"), href: "/#voice-ai" },
+    { name: t("documentAi", "Document AI"), href: "/#document-ai" },
+    { name: t("ayush", "AYUSH"), href: "/#ayush" },
+    { name: t("safety", "Safety"), href: "/#safety" },
+    { name: t("faqs", "FAQs"), href: "/#faqs" },
   ];
 
   return (
     <header
       className={`fixed left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "top-3 px-3 sm:px-6 lg:px-8 max-w-[96%] xl:max-w-[1440px] mx-auto"
-          : "top-0 w-full px-4 sm:px-8 lg:px-12 bg-transparent py-5 max-w-[1440px] mx-auto"
+          ? "top-4 sm:top-5 px-3 sm:px-6 lg:px-8 max-w-[96%] xl:max-w-[1400px] mx-auto"
+          : "top-3 sm:top-4 w-full px-4 sm:px-8 lg:px-12 bg-transparent py-2 max-w-[1400px] mx-auto"
       }`}
     >
       {/* Morphing Inner Container */}
       <div
         className={`transition-all duration-300 ${
           scrolled
-            ? "rounded-full px-6 py-2.5 bg-white/95 dark:bg-black/95 backdrop-blur-xl shadow-2xl border border-slate-200/90 dark:border-[#27272a] w-full"
+            ? "rounded-full px-5 py-1.5 bg-white/95 dark:bg-black/95 backdrop-blur-xl shadow-2xl border border-slate-200/90 dark:border-[#27272a] w-full"
             : "w-full mx-auto bg-transparent border border-transparent"
         }`}
       >
@@ -56,41 +57,41 @@ export default function Navbar() {
           {/* Brand & Logo */}
           <Link
             href="/"
-            className="flex items-center gap-3 group focus-accessible rounded-full p-1 shrink-0"
+            className="flex items-center gap-2.5 group focus-accessible rounded-full p-0.5 shrink-0"
             aria-label="MediSaarthi Home"
           >
-            <div className="relative flex items-center justify-center p-1.5 bg-white rounded-xl shadow-md border border-slate-200 group-hover:scale-105 transition-transform">
+            <div className="relative flex items-center justify-center p-1 bg-white rounded-lg shadow-md border border-slate-200 group-hover:scale-105 transition-transform">
               <img
                 src="/logo/logo.png"
                 alt="MediSaarthi Logo"
-                className="h-7 w-auto object-contain"
+                className="h-6 w-auto object-contain"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   e.currentTarget.nextSibling.style.display = 'flex';
                 }}
               />
-              <div className="hidden h-7 px-2 items-center justify-center bg-[#0F4C5C] text-white font-bold text-xs">
+              <div className="hidden h-6 px-1.5 items-center justify-center bg-[#0F4C5C] text-white font-bold text-xs">
                 MS
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-extrabold tracking-tight text-[#0F4C5C] dark:text-white flex items-center gap-1.5 font-newsreader">
+              <span className="text-base font-extrabold tracking-tight text-[#0F4C5C] dark:text-white flex items-center gap-1 font-newsreader leading-tight">
                 MediSaarthi
-                <span className="w-2 h-2 rounded-full bg-[#18A999] animate-pulse"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#18A999] animate-pulse"></span>
               </span>
-              <span className="text-[9px] font-bold text-[#18A999] tracking-widest uppercase -mt-0.5">
+              <span className="text-[8px] font-bold text-[#18A999] tracking-widest uppercase -mt-0.5">
                 AI Clinical Intake
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1.5 bg-slate-100/80 dark:bg-black p-1.5 rounded-full border border-slate-200 dark:border-[#27272a] shrink-0">
+          <nav className="hidden lg:flex items-center gap-1 bg-slate-100/80 dark:bg-black p-1 rounded-full border border-slate-200 dark:border-[#27272a] shrink-0">
             {navLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
-                className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-[#a1a1aa] hover:text-[#0F4C5C] dark:hover:text-white hover:bg-white dark:hover:bg-[#111111] rounded-full transition-all focus-accessible whitespace-nowrap"
+                className="px-3 py-1 text-xs font-semibold text-slate-700 dark:text-[#a1a1aa] hover:text-[#0F4C5C] dark:hover:text-white hover:bg-white dark:hover:bg-[#111111] rounded-full transition-all focus-accessible whitespace-nowrap"
               >
                 {link.name}
               </a>
@@ -98,33 +99,33 @@ export default function Navbar() {
           </nav>
 
           {/* Action Buttons & Theme / Language Switcher */}
-          <div className="hidden md:flex items-center gap-2.5 shrink-0">
+          <div className="hidden md:flex items-center gap-2 shrink-0">
             {/* Language Switcher */}
             <LanguageSwitcher />
 
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full bg-slate-100 dark:bg-black text-[#18A999] border border-slate-200 dark:border-[#27272a] hover:border-[#18A999] transition-all focus-accessible flex items-center justify-center shadow-sm shrink-0"
+              className="p-1.5 rounded-full bg-slate-100 dark:bg-black text-[#18A999] border border-slate-200 dark:border-[#27272a] hover:border-[#18A999] transition-all focus-accessible flex items-center justify-center shadow-sm shrink-0"
               aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
               title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
             >
               {theme === "dark" ? (
-                <Sun className="w-4 h-4 text-amber-400" />
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
               ) : (
-                <Moon className="w-4 h-4 text-[#0F4C5C]" />
+                <Moon className="w-3.5 h-3.5 text-[#0F4C5C]" />
               )}
             </button>
 
             <Link
               href="/login"
-              className="px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#a1a1aa] hover:text-[#0F4C5C] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#111111] rounded-full transition-all focus-accessible whitespace-nowrap"
+              className="px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-[#a1a1aa] hover:text-[#0F4C5C] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#111111] rounded-full transition-all focus-accessible whitespace-nowrap"
             >
               {t("signIn", "Sign In")}
             </Link>
             <Link
               href="/signup"
-              className="px-5 py-2 text-xs font-extrabold text-white bg-gradient-to-r from-[#0F4C5C] via-[#126478] to-[#18A999] hover:opacity-95 rounded-full shadow-teal-glow transition-all flex items-center gap-2 active:scale-95 focus-accessible whitespace-nowrap"
+              className="px-4 py-1.5 text-xs font-extrabold text-white bg-gradient-to-r from-[#0F4C5C] via-[#126478] to-[#18A999] hover:opacity-95 rounded-full shadow-teal-glow transition-all flex items-center gap-1.5 active:scale-95 focus-accessible whitespace-nowrap"
             >
               <span>{t("getStarted", "Get Started")}</span>
               <ArrowRight className="w-3.5 h-3.5" />

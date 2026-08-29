@@ -4,14 +4,18 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { usePatientIntake } from '@/context/PatientIntakeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { getTranslation } from '@/locales/i18n';
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import Button from '@/components/ui/Button';
 import { ShieldCheck, Volume2, Check, X } from 'lucide-react';
 
 export default function ConsentPage() {
   const router = useRouter();
   const { intakeState, setConsent } = usePatientIntake();
-  const lang = intakeState?.language || 'hi';
+  const { language } = useLanguage();
+  const lang = language || intakeState?.language || 'hi';
+  const isHindi = lang === 'hi';
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   const handleAgree = () => {
@@ -21,7 +25,10 @@ export default function ConsentPage() {
 
   const handleDecline = () => {
     setConsent(false);
-    alert("Consent is required to proceed with AI clinical intake. Please speak with kiosk staff for manual assistance.");
+    alert(isHindi 
+      ? "एआई क्लिनिकल इंटेक जारी रखने के लिए सहमति आवश्यक है। कृपया मैन्युअल सहायता के लिए कियोस्क स्टाफ से संपर्क करें।" 
+      : "Consent is required to proceed with AI clinical intake. Please speak with kiosk staff for manual assistance."
+    );
   };
 
   const handleAudioHelp = () => {
@@ -29,41 +36,27 @@ export default function ConsentPage() {
       window.speechSynthesis.cancel();
       const text = getTranslation(lang, 'consentBullet1') + ' ' + getTranslation(lang, 'consentBullet2');
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+      const targetLang = isHindi ? 'hi-IN' : 'en-IN';
+      utterance.lang = targetLang;
+      utterance.rate = isHindi ? 0.88 : 0.95;
+
+      const voices = window.speechSynthesis.getVoices();
+      if (isHindi && voices.length > 0) {
+        const hindiVoice = voices.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi') || v.name.includes('हिन्दी'));
+        if (hindiVoice) utterance.voice = hindiVoice;
+      }
+
       utterance.onstart = () => setIsPlayingAudio(true);
       utterance.onend = () => setIsPlayingAudio(false);
+      utterance.onerror = () => setIsPlayingAudio(false);
       window.speechSynthesis.speak(utterance);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white p-6 md:p-12 flex flex-col justify-between relative overflow-hidden">
-      {/* Gridlines & Glow */}
-      <div className="absolute top-10 left-10 w-96 h-96 bg-[#18A999]/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#6366F1]/15 rounded-full blur-3xl pointer-events-none" />
-      <div 
-        className="absolute inset-0 bg-grid-pattern opacity-85 dark:opacity-60 pointer-events-none"
-        style={{
-          maskImage: "radial-gradient(ellipse at center, black 50%, transparent 90%)",
-          WebkitMaskImage: "radial-gradient(ellipse at center, black 50%, transparent 90%)"
-        }}
-      />
-
-      {/* Header */}
-      <header className="flex items-center justify-between max-w-4xl w-full mx-auto relative z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 relative p-1 bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-[#27272a]">
-            <Image src="/logo/logo.png" alt="MediSaarthi" fill className="object-contain p-1" />
-          </div>
-          <span className="font-extrabold text-lg text-[#0F4C5C] dark:text-white font-newsreader">Medi<span className="text-[#18A999]">Saarthi</span></span>
-        </div>
-        <span className="text-xs font-bold uppercase tracking-wider px-3.5 py-1.5 bg-[#0F4C5C]/10 dark:bg-black text-[#18A999] rounded-full border border-[#18A999]/30 dark:border-[#27272a]">
-          Step 2 of 4: Informed Consent
-        </span>
-      </header>
-
-      {/* Main Consent Card */}
-      <main className="max-w-2xl w-full mx-auto my-6 bg-white dark:bg-black border border-slate-200 dark:border-[#27272a] p-8 rounded-3xl shadow-2xl space-y-6 relative z-10">
+    <DashboardLayout>
+      <div className="max-w-2xl w-full mx-auto my-2 space-y-6">
+        <div className="bg-white dark:bg-black border border-slate-200 dark:border-[#27272a] p-6 md:p-8 rounded-3xl shadow-2xl space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-2xl bg-[#0F4C5C]/10 dark:bg-black text-[#18A999] border border-[#18A999]/30 dark:border-[#27272a]">
@@ -104,20 +97,16 @@ export default function ConsentPage() {
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-end gap-4">
-          <Button size="lg" variant="outline" onClick={handleDecline} icon={X} fullWidth>
-            {getTranslation(lang, 'iDoNotAgree')}
-          </Button>
-          <Button size="lg" variant="primary" onClick={handleAgree} icon={Check} fullWidth>
-            {getTranslation(lang, 'iAgree')}
-          </Button>
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-end gap-4">
+            <Button size="lg" variant="outline" onClick={handleDecline} icon={X} fullWidth>
+              {getTranslation(lang, 'iDoNotAgree')}
+            </Button>
+            <Button size="lg" variant="primary" onClick={handleAgree} icon={Check} fullWidth>
+              {getTranslation(lang, 'iAgree')}
+            </Button>
+          </div>
         </div>
-      </main>
-
-      <footer className="text-center text-xs text-slate-400 relative z-10">
-        MediSaarthi Consent Protocol v2026.1 • Privacy Compliant
-      </footer>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

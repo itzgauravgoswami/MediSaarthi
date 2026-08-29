@@ -18,14 +18,20 @@ export default function AuditLogsPage() {
     load();
   }, []);
 
-  const filtered = logs.filter(l => l.action.toLowerCase().includes(search.toLowerCase()) || l.user.toLowerCase().includes(search.toLowerCase()) || l.resource.toLowerCase().includes(search.toLowerCase()));
+  const filtered = logs.filter(l => {
+    const action = l.action || '';
+    const user = l.user || l.actorName || '';
+    const resource = l.resource || l.resourceId || l.resourceType || '';
+    const term = search.toLowerCase();
+    return action.toLowerCase().includes(term) || user.toLowerCase().includes(term) || resource.toLowerCase().includes(term);
+  });
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white">Security & Audit Trails</h1>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white">Security &amp; Audit Trails</h1>
             <p className="text-xs text-slate-500">Immutable clinical audit log tracking data access, consent declarations, and verification sign-offs.</p>
           </div>
 
@@ -55,20 +61,30 @@ export default function AuditLogsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs font-medium">
-                {filtered.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="py-4 px-4 text-slate-400 font-mono text-[11px]">{log.timestamp}</td>
-                    <td className="py-4 px-4 font-bold text-slate-900 dark:text-white">{log.user}</td>
-                    <td className="py-4 px-4 text-slate-600 dark:text-slate-300">{log.role}</td>
-                    <td className="py-4 px-4 font-semibold text-slate-800 dark:text-slate-200">{log.action}</td>
-                    <td className="py-4 px-4 font-mono text-slate-500 text-[11px]">{log.resource}</td>
-                    <td className="py-4 px-4 text-right">
-                      <Badge variant={log.status === 'Success' ? 'success' : 'warning'}>
-                        {log.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map((log, idx) => {
+                  const logKey = log.id || log.auditId || log._id || `log-${idx}`;
+                  const logTime = log.timestamp || (log.createdAt ? new Date(log.createdAt).toLocaleString('en-IN') : 'N/A');
+                  const logUser = log.user || log.actorName || 'System';
+                  const logRole = log.role || log.actorRole || 'System';
+                  const logAction = log.action || 'Event';
+                  const logResource = log.resource || (log.resourceType ? `${log.resourceType} (${log.resourceId || ''})` : 'N/A');
+                  const logStatus = log.status || 'Success';
+
+                  return (
+                    <tr key={logKey} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-4 px-4 text-slate-400 font-mono text-[11px]">{logTime}</td>
+                      <td className="py-4 px-4 font-bold text-slate-900 dark:text-white">{logUser}</td>
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300">{logRole}</td>
+                      <td className="py-4 px-4 font-semibold text-slate-800 dark:text-slate-200">{logAction}</td>
+                      <td className="py-4 px-4 font-mono text-slate-500 text-[11px]">{logResource}</td>
+                      <td className="py-4 px-4 text-right">
+                        <Badge variant={logStatus === 'Success' ? 'success' : 'warning'}>
+                          {logStatus}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { 
   LayoutDashboard, 
   Users, 
+  UserCheck,
   Calendar, 
   Mic, 
   FileText, 
@@ -23,7 +24,10 @@ import {
   Hospital,
   Pill,
   PackageCheck,
-  ClipboardList
+  ClipboardList,
+  Stethoscope,
+  Globe,
+  Receipt
 } from 'lucide-react';
 
 export default function Sidebar({ collapsed, setCollapsed }) {
@@ -33,19 +37,22 @@ export default function Sidebar({ collapsed, setCollapsed }) {
   const doctorNav = [
     { name: 'Doctor Dashboard', href: '/doctor/dashboard', icon: LayoutDashboard },
     { name: 'Patients Queue', href: '/doctor/patients', icon: Users },
+    { name: 'Attended Patients', href: '/doctor/attended', icon: UserCheck },
     { name: 'Appointments', href: '/doctor/appointments', icon: Calendar },
-    { name: 'Document OCR Viewer', href: '/documents', icon: FileText },
-    { name: 'Medical Timeline', href: '/doctor/patients/P102/timeline', icon: Clock },
+    { name: 'Analytics', href: '/doctor/analytics', icon: BarChart3 },
     { name: 'Red Flags Desk', href: '/triage/red-flags', icon: AlertTriangle, badge: '1' },
     { name: 'AYUSH Workspace', href: '/ayush', icon: Activity },
   ];
 
   const patientNav = [
     { name: 'Patient Dashboard', href: '/patient/dashboard', icon: LayoutDashboard },
+    { name: 'Find Doctors', href: '/patient/doctors', icon: Stethoscope },
+    { name: 'Reports & Prescriptions', href: '/patient/reports', icon: ClipboardList, badge: '5' },
+    { name: 'Bills & Invoices', href: '/patient/bills', icon: Receipt },
     { name: 'AI Voice Intake', href: '/patient/interview', icon: Mic },
     { name: 'Upload Documents', href: '/patient/documents', icon: FileText },
-    { name: 'Language Select', href: '/patient/language', icon: Activity },
-    { name: 'Informed Consent', href: '/patient/consent', icon: FileText },
+    { name: 'Language Select', href: '/patient/language', icon: Globe },
+    { name: 'Informed Consent', href: '/patient/consent', icon: ShieldAlert },
   ];
 
   const pharmacyNav = [

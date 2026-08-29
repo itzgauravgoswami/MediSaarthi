@@ -52,43 +52,43 @@ export default function DoctorDashboardPage() {
 
         {/* Overview KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Card className="p-3.5 flex items-center gap-3 hover:border-[#18A999]/50">
-            <div className="p-2.5 rounded-xl bg-blue-950/40 text-blue-400 border border-blue-900/50">
+          <Card className="p-3.5 flex items-center gap-3 hover:border-blue-500/40 transition-all">
+            <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Patients Today</span>
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white font-newsreader">24</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block">Patients Today</span>
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white">24</span>
             </div>
           </Card>
 
-          <Card className="p-3.5 flex items-center gap-3 hover:border-[#18A999]/50">
-            <div className="p-2.5 rounded-xl bg-[#0F4C5C]/20 text-[#18A999] border border-[#18A999]/30">
+          <Card className="p-3.5 flex items-center gap-3 hover:border-teal-500/40 transition-all">
+            <div className="p-2.5 rounded-xl bg-teal-50 dark:bg-[#0F4C5C]/20 text-teal-600 dark:text-[#18A999] border border-teal-200 dark:border-[#18A999]/30">
               <FileCheck className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">AI Intakes Done</span>
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white font-newsreader">19</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block">AI Intakes Done</span>
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white">19</span>
             </div>
           </Card>
 
-          <Card className="p-3.5 flex items-center gap-3 hover:border-[#18A999]/50">
-            <div className="p-2.5 rounded-xl bg-amber-950/40 text-amber-400 border border-amber-900/50">
+          <Card className="p-3.5 flex items-center gap-3 hover:border-amber-500/40 transition-all">
+            <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50">
               <Clock className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Awaiting Review</span>
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white font-newsreader">4</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block">Awaiting Review</span>
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white">4</span>
             </div>
           </Card>
 
-          <Card className="p-3.5 flex items-center gap-3 hover:border-rose-500/50">
-            <div className="p-2.5 rounded-xl bg-rose-950/40 text-rose-400 border border-rose-900/50">
+          <Card className="p-3.5 flex items-center gap-3 hover:border-rose-500/40 transition-all">
+            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Red Flag Cases</span>
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white font-newsreader">1</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block">Red Flag Cases</span>
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white">1</span>
             </div>
           </Card>
         </div>
@@ -159,7 +159,7 @@ export default function DoctorDashboardPage() {
                     </td>
                     <td className="py-2.5 px-3">
                       {patient.redFlag === 'Attention Required' ? (
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-950 text-rose-300 border border-rose-800 flex items-center gap-1 w-max animate-pulse">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800 flex items-center gap-1 w-max animate-pulse">
                           <AlertTriangle className="w-2.5 h-2.5" /> Attention Required
                         </span>
                       ) : (

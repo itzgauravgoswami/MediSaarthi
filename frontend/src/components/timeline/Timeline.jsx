@@ -38,12 +38,13 @@ export default function Timeline({ timelineEvents = [] }) {
       </div>
 
       <div className="relative pl-6 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-[#27272a]">
-        {timelineEvents.map((evt) => {
+        {(Array.isArray(timelineEvents) ? timelineEvents : []).map((evt, idx) => {
           const Icon = getIcon(evt.type);
           const colorClass = getColor(evt.type);
+          const uniqueKey = evt.id || evt._id || `timeline-item-${evt.type || 'event'}-${idx}`;
 
           return (
-            <div key={evt.id} className="relative group">
+            <div key={uniqueKey} className="relative group">
               {/* Node */}
               <div className={`absolute -left-6 top-0 w-6 h-6 rounded-full ${colorClass} flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-black`}>
                 <Icon className="w-3.5 h-3.5" />

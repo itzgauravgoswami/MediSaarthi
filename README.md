@@ -377,61 +377,104 @@ Primary MongoDB collections:
 
 # API Architecture
 
-Key REST Endpoints:
-```http
-POST /api/auth/login
-POST /api/patients/register
-POST /api/interviews/respond
-POST /api/documents/upload
-GET  /api/doctors/queue
-GET  /api/clinical-history/:patientId
-PUT  /api/clinical-history/:id/confirm
-```
-
----
-
-# Project Setup
+# Project Setup & Local Development
 
 ### Prerequisites
 - **Node.js**: v20.0.0 or higher
 - **npm**: v10.0.0 or higher
-- **MongoDB**: Local instance or MongoDB Atlas URI
-- **Google Gemini API Key**: From Google AI Studio
+- **Python**: 3.9+ (Optional for self-hosted Whisper speech-to-text)
+- **FFmpeg**: (Optional for audio format normalization)
+- **Tesseract OCR**: Pre-bundled via `tesseract.js` WASM engine (or system binary `tesseract-ocr`)
+- **MongoDB**: Local instance (`mongodb://localhost:27017`) or MongoDB Atlas URI
 
-### Installation
+### 1. System Dependencies (Optional for Full Self-Hosted Inference)
+```bash
+# Ubuntu / Debian
+sudo apt-get update
+sudo apt-get install -y tesseract-ocr tesseract-ocr-hin tesseract-ocr-eng ffmpeg python3-pip
+pip install faster-whisper
+
+# macOS (Homebrew)
+brew install tesseract tesseract-lang ffmpeg
+pip3 install faster-whisper
+
+# Windows (Chocolatey or Winget)
+choco install tesseract ffmpeg
+pip install faster-whisper
+```
+
+### 2. Repository Installation
 
 ```bash
 # Clone the repository
 git clone https://github.com/your-org/medisaarthi.git
 cd medisaarthi
 
-# Install Frontend Dependencies
-cd frontend
-npm install
-
 # Install Backend Dependencies
-cd ../backend
+cd backend
+npm install
+pip install -r requirements.txt # Optional for local faster-whisper
+
+# Install Frontend Dependencies
+cd ../frontend
 npm install
 ```
 
 ---
 
-# Environment Variables
+# Environment Variables Configuration
 
 Create `.env` inside `backend/`:
 
 ```env
+NODE_ENV=development
 PORT=5000
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/medisaarthi
+DEMO_MODE=true
+
+MONGODB_URI=mongodb://localhost:27017/medisaarthi
 JWT_SECRET=your_super_secret_jwt_key
-GEMINI_API_KEY=your_google_gemini_api_key
-CLIENT_URL=http://localhost:3000
+JWT_REFRESH_SECRET=your_super_refresh_jwt_key
+
+# Google Gemini Clinical AI
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-1.5-flash
+
+# Storage Provider: 'cloudinary' | 'local'
+STORAGE_PROVIDER=local
+STORAGE_DIR=uploads
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_key
+CLOUDINARY_API_SECRET=your_cloudinary_secret
+CLOUDINARY_FOLDER=medisaarthi_clinical_docs
+
+# Self-Hosted OCR Provider: 'tesseract' | 'mock'
+OCR_PROVIDER=tesseract
+OCR_LANGUAGE=eng+hin
+OCR_TIMEOUT_MS=60000
+
+# Self-Hosted Speech Provider: 'whisper' | 'mock'
+SPEECH_PROVIDER=whisper
+WHISPER_MODEL=small
+WHISPER_DEVICE=cpu
+WHISPER_COMPUTE_TYPE=int8
+WHISPER_PYTHON_PATH=python
+WHISPER_CONCURRENCY_LIMIT=2
+
+# ABDM Gateway Interoperability
+ABDM_ENABLED=true
+ABDM_MODE=sandbox
+ABDM_BASE_URL=https://dev.abdm.gov.in/gateway/v0.5
+ABDM_CLIENT_ID=your_abdm_sandbox_client_id
+ABDM_CLIENT_SECRET=your_abdm_sandbox_client_secret
+
+# FHIR Interoperability
+FHIR_BASE_URL=http://localhost:5000/api/v1/fhir
 ```
 
 Create `.env.local` inside `frontend/`:
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
 ---
@@ -443,6 +486,12 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
 cd backend
 npm run dev
 
+# Seed Development Database
+npm run seed
+
+# Run Test Suite
+npm test
+
 # Terminal 2: Run Frontend Next.js App
 cd frontend
 npm run dev
@@ -452,24 +501,65 @@ Visit `http://localhost:3000` in your browser.
 
 ---
 
-# Deployment
+# Production Deployment
 
-- **Frontend**: Deployed on Vercel / Netlify.
-- **Backend**: Deployed on Render / Railway / AWS EC2.
-- **Database**: MongoDB Atlas Managed Cloud Cluster.
+### Docker Deployment (Recommended)
+
+MediSaarthi backend includes a multi-stage production Docker container pre-packaged with Node.js 20, Python 3, Tesseract OCR (with English & Hindi packs), FFmpeg, and Faster-Whisper:
+
+```bash
+cd backend
+
+# Build and start with Docker Compose
+docker-compose up --build -d
+```
+
+### Production Resource Sizing Guidelines
+
+| Component | Minimum Spec (Low Resource) | Recommended (Production OPD) |
+|---|---|---|
+| **CPU** | 2 vCPUs | 4 - 8 vCPUs |
+| **RAM** | 2 GB (Whisper `tiny` / `base`) | 4 - 8 GB (Whisper `small` / `int8`) |
+| **Storage** | 10 GB SSD | 50 GB SSD / Cloudinary CDN |
+| **OCR Engine** | Tesseract (in-process / WASM) | Tesseract-OCR (`tesseract-ocr-hin`) |
+| **Speech STT** | Faster-Whisper `tiny` / `base` (int8) | Faster-Whisper `small` (int8/float16) |
+
+### Health Check Telemetry
+
+Access `GET /api/v1/health` or `GET /api/health` to verify provider states:
+
+```json
+{
+  "status": "ok",
+  "storage": "cloudinary",
+  "ocr": "tesseract",
+  "speech": "whisper",
+  "fhir": "configured",
+  "abdm": "sandbox",
+  "providers": {
+    "storage": { "active": "cloudinary", "status": "ok" },
+    "ocr": { "active": "tesseract", "status": "operational_self_hosted" },
+    "speech": { "active": "whisper", "model": "small", "status": "operational_self_hosted" },
+    "ai": { "geminiEngine": "Live Gemini 1.5" },
+    "database": { "status": "connected", "mode": "Live MongoDB" },
+    "abdm": { "mode": "sandbox", "enabled": true },
+    "fhir": { "baseUrl": "https://your-api.com/api/v1/fhir", "standard": "HL7 FHIR R4" }
+  }
+}
+```
 
 ---
 
 # Testing
 
 ```bash
-# Run Frontend Build Check
-cd frontend
-npm run build
-
-# Run Backend Tests
+# Run Master Test Suite (Unit, Interoperability, OCR, Speech, Storage, Security)
 cd backend
 npm test
+
+# Run Frontend Production Build Check
+cd ../frontend
+npm run build
 ```
 
 ---
@@ -478,21 +568,23 @@ npm test
 
 - [x] Multilingual Voice AI Engine (Hindi & English)
 - [x] Pure Black OLED Dark Mode Design
-- [x] Medical Document Intelligence & OCR Pipeline
+- [x] Medical Document Intelligence & OCR Pipeline (Self-Hosted Tesseract)
+- [x] Speech-to-Text Transcription Engine (Self-Hosted Faster-Whisper)
+- [x] Cloudinary & Local Storage Provider Abstraction
 - [x] Red-Flag Safety Triage Screening
 - [x] Physician Verification & Summary Editing Interface
 - [x] Native AYUSH & Dashavidha Pariksha Workflow
-- [ ] Regional Dialect Audio Processing Expansion
-- [ ] Full ABDM Milestone 1 & 2 Certification Integration
-- [ ] Offline On-Premises Edge AI Kiosk Hardware Deployment
+- [x] ABDM Milestone 1 Sandbox Gateway Client
+- [ ] Regional Dialect Expansion (Bengali, Telugu, Tamil, Marathi)
+- [ ] Offline On-Premises Edge AI Kiosk Hardware Kit
 
 ---
 
 # Limitations
 
-- AI-generated summaries are decision-support tools and require physician review.
-- Document OCR accuracy depends on scan quality and handwriting legibility.
-- Speech recognition performance depends on ambient room acoustics.
+- AI-generated summaries are decision-support tools and require qualified physician review.
+- Document OCR accuracy depends on scan clarity and handwriting legibility.
+- Self-hosted Whisper inference latency depends on CPU cores and RAM allocation (recommended model: `small` with `int8` quantization).
 
 ---
 
@@ -508,16 +600,11 @@ npm test
 
 - **For Patients**: Faster intake, native language expression, reduced waiting room frustration.
 - **For Doctors**: 70% less repetitive typing, pre-structured histories, clear red-flag visibility.
-- **For Hospitals**: Higher OPD throughput, standardized digital records, FHIR compatibility.
-
----
-
-# Conclusion
-
-MediSaarthi transforms patient intake from a manual bottleneck into an intelligent digital entry point—giving doctors back what matters most: **time to care for patients**.
+- **For Hospitals**: Higher OPD throughput, standardized digital records, FHIR and ABDM compatibility.
 
 ---
 
 # License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+

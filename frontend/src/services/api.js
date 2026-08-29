@@ -1,6 +1,6 @@
 // Centralized API Service with Sandbox & Demo Fallback Adapter
 
-import { DEMO_PATIENTS, DEMO_RED_FLAGS, DEMO_KIOSKS, DEMO_AUDIT_LOGS, DEMO_ANALYTICS_STATS, DEMO_AYUSH_DATA } from './demoDataService';
+import { DEMO_PATIENTS, DEMO_ATTENDED_PATIENTS, DEMO_DOCTOR_ANALYTICS, DEMO_RED_FLAGS, DEMO_KIOSKS, DEMO_AUDIT_LOGS, DEMO_ANALYTICS_STATS, DEMO_AYUSH_DATA } from './demoDataService';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -30,6 +30,8 @@ export async function fetchWithFallback(endpoint, options = {}, demoDataGetter) 
 
 export const patientApi = {
   getPatients: () => fetchWithFallback('/patients', {}, () => DEMO_PATIENTS),
+  getAttendedPatients: () => fetchWithFallback('/doctor/attended', {}, () => DEMO_ATTENDED_PATIENTS),
+  getDoctorAnalytics: () => fetchWithFallback('/doctor/analytics', {}, () => DEMO_DOCTOR_ANALYTICS),
   getPatientById: (id) => fetchWithFallback(`/patients/${id}`, {}, () => DEMO_PATIENTS.find(p => p.id === id) || DEMO_PATIENTS[0]),
   saveIntake: (intakeData) => fetchWithFallback('/patients/intake', { method: 'POST', body: JSON.stringify(intakeData) }, () => ({ success: true, token: "#106", message: "Intake recorded" })),
   verifySummary: (patientId, doctorName) => fetchWithFallback(`/patients/${patientId}/verify`, { method: 'POST', body: JSON.stringify({ doctorName }) }, () => {
@@ -57,3 +59,4 @@ export const adminApi = {
   getKiosks: () => fetchWithFallback('/admin/kiosks', {}, () => DEMO_KIOSKS),
   getAuditLogs: () => fetchWithFallback('/admin/audit-logs', {}, () => DEMO_AUDIT_LOGS)
 };
+

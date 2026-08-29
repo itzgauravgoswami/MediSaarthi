@@ -68,45 +68,45 @@ export default function PharmacyDashboardPage() {
           </div>
         </div>
 
-        {/* Overview KPI Cards */}
+        {/* Overview Stat Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Card className="p-3.5 flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-[#0F4C5C]/20 text-[#18A999] border border-[#18A999]/30">
+            <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50">
               <Pill className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Rx Received Today</span>
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white font-newsreader">18</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block">Rx Received Today</span>
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white">18</span>
             </div>
           </Card>
 
           <Card className="p-3.5 flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-emerald-950/40 text-emerald-400 border border-emerald-900/50">
+            <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
               <PackageCheck className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Dispensed & Verified</span>
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white font-newsreader">14</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block">Dispensed & Verified</span>
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white">14</span>
             </div>
           </Card>
 
           <Card className="p-3.5 flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-amber-950/40 text-amber-400 border border-amber-900/50">
+            <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50">
               <Clock className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Pending Fulfillment</span>
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white font-newsreader">4</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block">Pending Fulfillment</span>
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white">4</span>
             </div>
           </Card>
 
           <Card className="p-3.5 flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-rose-950/40 text-rose-400 border border-rose-900/50">
+            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
               <AlertCircle className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Low Stock Alerts</span>
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white font-newsreader">2</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block">Low Stock Alerts</span>
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white">2</span>
             </div>
           </Card>
         </div>

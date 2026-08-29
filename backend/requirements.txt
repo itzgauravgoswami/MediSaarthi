@@ -1,0 +1,2 @@
+# MediSaarthi Python Speech Inference Dependencies
+faster-whisper>=1.0.3

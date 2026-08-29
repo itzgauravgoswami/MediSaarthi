@@ -44,8 +44,8 @@ export default function KiosksPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs font-medium">
-                {kiosks.map((kiosk) => (
-                  <tr key={kiosk.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                {kiosks.map((kiosk, idx) => (
+                  <tr key={kiosk.id || kiosk._id || `kiosk-${idx}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="py-4 px-4 font-black text-slate-900 dark:text-white">{kiosk.id}</td>
                     <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200">{kiosk.location}</td>
                     <td className="py-4 px-4">

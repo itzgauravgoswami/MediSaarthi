@@ -155,3 +155,29 @@ html.dark .bg-grid-pattern, .dark .bg-grid-pattern {
     linear-gradient(to right, rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px);
 }
+
+/* Custom Sleek Scrollbar for Overflow Containers */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #18A999;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #148e81;
+}
+
+/* Firefox Scrollbar Support */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #18A999 rgba(255, 255, 255, 0.05);
+}

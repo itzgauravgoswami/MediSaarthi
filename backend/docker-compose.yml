@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medisaarthi_backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongo:27017/medisaarthi
+      - JWT_SECRET=medisaarthi_prod_secret_2026
+      - JWT_REFRESH_SECRET=medisaarthi_prod_refresh_secret_2026
+      - STORAGE_PROVIDER=cloudinary
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - OCR_PROVIDER=tesseract
+      - SPEECH_PROVIDER=whisper
+      - WHISPER_MODEL=small
+      - WHISPER_DEVICE=cpu
+      - WHISPER_COMPUTE_TYPE=int8
+      - ABDM_ENABLED=true
+      - ABDM_MODE=sandbox
+      - FHIR_BASE_URL=http://localhost:5000/api/v1/fhir
+    depends_on:
+      - mongo
+    restart: unless-stopped
+    volumes:
+      - backend_uploads:/app/uploads
+
+  mongo:
+    image: mongo:7.0
+    container_name: medisaarthi_mongo
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  backend_uploads:
+  mongo_data:

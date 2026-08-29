@@ -277,3 +277,147 @@ export const DEMO_ANALYTICS_STATS = {
     { time: "11:00 AM", count: 5 }
   ]
 };
+
+export const DEMO_ATTENDED_PATIENTS = [
+  {
+    id: "ATT-101",
+    token: "#088",
+    name: "Ramesh Chandra",
+    age: 52,
+    gender: "Male",
+    phone: "+91 98450 11223",
+    abhaId: "91-8844-2211-9901",
+    attendedAt: "28 Aug 2026, 09:15 AM",
+    consultationDuration: "4.5 mins",
+    chiefComplaint: "Acute viral rhinitis & throat irritation for 2 days",
+    diagnosis: "Upper Respiratory Tract Infection (URTI)",
+    rxSummary: "Tab Azithromycin 500mg OD (3d), Tab Levocetirizine 5mg HS (5d)",
+    outcome: "Prescribed & Discharged",
+    status: "Completed",
+    aiAccuracyRating: "99%",
+    satisfaction: 5,
+    doctorNotes: "Clear chest on auscultation. AI voice summary was 100% congruent with patient history. Advised warm saline gargles."
+  },
+  {
+    id: "ATT-102",
+    token: "#089",
+    name: "Meenakshi Devi",
+    age: 41,
+    gender: "Female",
+    phone: "+91 97110 33445",
+    abhaId: "91-7733-4455-8812",
+    attendedAt: "28 Aug 2026, 09:35 AM",
+    consultationDuration: "6.0 mins",
+    chiefComplaint: "Unilateral throbbing headache with photophobia",
+    diagnosis: "Migraine Headache without Aura",
+    rxSummary: "Tab Naproxen 500mg SOS, Tab Propranolol 20mg OD, Tab Domperidone 10mg SOS",
+    outcome: "Follow-up in 2 Weeks",
+    status: "Completed",
+    aiAccuracyRating: "97%",
+    satisfaction: 5,
+    doctorNotes: "Trigger identified as sleep deprivation. Advised migraine diary and lifestyle adjustments."
+  },
+  {
+    id: "ATT-103",
+    token: "#090",
+    name: "Sunil Joshi",
+    age: 63,
+    gender: "Male",
+    phone: "+91 99201 55667",
+    abhaId: "91-6622-8899-7733",
+    attendedAt: "28 Aug 2026, 09:50 AM",
+    consultationDuration: "3.8 mins",
+    chiefComplaint: "Quarterly follow-up for diabetes & hypertension management",
+    diagnosis: "Type 2 Diabetes Mellitus & Essential HTN",
+    rxSummary: "Tab Metformin 500mg BD, Tab Telmisartan 40mg OD, Tab Atorvastatin 10mg HS",
+    outcome: "Routine Refill",
+    status: "Completed",
+    aiAccuracyRating: "99%",
+    satisfaction: 5,
+    doctorNotes: "HbA1c 6.9%. Well managed. Renal parameters within normal limits. Continued current medication regimen."
+  },
+  {
+    id: "ATT-104",
+    token: "#091",
+    name: "Anita Roy",
+    age: 34,
+    gender: "Female",
+    phone: "+91 98300 77889",
+    abhaId: "91-5511-9988-6644",
+    attendedAt: "28 Aug 2026, 10:05 AM",
+    consultationDuration: "5.2 mins",
+    chiefComplaint: "Heartburn, retrosternal burning and sour belching",
+    diagnosis: "Gastroesophageal Reflux Disease (GERD)",
+    rxSummary: "Cap Rabeprazole 20mg OD before breakfast (14d), Syp Sucralfate 10ml TDS",
+    outcome: "Dietary Advice Given",
+    status: "Completed",
+    aiAccuracyRating: "96%",
+    satisfaction: 4,
+    doctorNotes: "No red flag signs (no dysphagia, weight loss). Advised smaller meals, avoid spicy foods and caffeine."
+  },
+  {
+    id: "ATT-105",
+    token: "#092",
+    name: "Deepak Verma",
+    age: 29,
+    gender: "Male",
+    phone: "+91 96540 88990",
+    abhaId: "91-4400-3322-1155",
+    attendedAt: "28 Aug 2026, 10:20 AM",
+    consultationDuration: "4.0 mins",
+    chiefComplaint: "Dry persistent cough following seasonal change",
+    diagnosis: "Post-Viral Allergic Bronchitis",
+    rxSummary: "Inhaler Budesonide 200mcg BD, Tab Montelukast + Levocetirizine OD HS (10d)",
+    outcome: "Prescribed & Discharged",
+    status: "Completed",
+    aiAccuracyRating: "98%",
+    satisfaction: 5,
+    doctorNotes: "Bilateral vesicular breath sounds, no wheeze at rest. Pre-intake OCR previous prescriptions accurately detected."
+  },
+  {
+    id: "ATT-106",
+    token: "#093",
+    name: "Kavita Nair",
+    age: 48,
+    gender: "Female",
+    phone: "+91 94470 22334",
+    abhaId: "91-3399-5544-2266",
+    attendedAt: "28 Aug 2026, 10:35 AM",
+    consultationDuration: "6.5 mins",
+    chiefComplaint: "Lower back pain radiating to right gluteal region",
+    diagnosis: "Lumbosacral Spondylosis with Sciatic Irritation",
+    rxSummary: "Tab Aceclofenac + Paracetamol + Chlorzoxazone BD (5d), Tab Pregabalin 75mg HS",
+    outcome: "Referred to Physiotherapy",
+    status: "Completed",
+    aiAccuracyRating: "98%",
+    satisfaction: 5,
+    doctorNotes: "SLR test positive at 60 degrees right leg. Advised ergonomic chair support and core strengthening exercises."
+  }
+];
+
+export const DEMO_DOCTOR_ANALYTICS = {
+  totalAttendedToday: 18,
+  avgConsultationTime: "4.2 mins",
+  timeSavedWithAI: "68 mins",
+  accuracyScore: "98.6%",
+  patientSatisfaction: "4.9 / 5.0",
+  redFlagsIntercepted: 4,
+  consultationThroughput: [
+    { hour: "08:00 AM", count: 3, avgTime: "4.8m" },
+    { hour: "09:00 AM", count: 6, avgTime: "4.2m" },
+    { hour: "10:00 AM", count: 7, avgTime: "3.9m" },
+    { hour: "11:00 AM", count: 2, avgTime: "4.5m" }
+  ],
+  diseaseCategories: [
+    { category: "Cardiovascular & HTN", count: 7, percentage: 39, color: "bg-rose-500" },
+    { category: "Endocrinology & Diabetes", count: 4, percentage: 22, color: "bg-blue-500" },
+    { category: "Respiratory / URTI", count: 3, percentage: 17, color: "bg-teal-500" },
+    { category: "Gastroenterology", count: 2, percentage: 11, color: "bg-amber-500" },
+    { category: "Orthopedics & Rheumatology", count: 2, percentage: 11, color: "bg-indigo-500" }
+  ],
+  intakeEfficiency: [
+    { metric: "Traditional Manual Intake", timePerPatient: "12.5 mins", throughput: "4.8 pts/hr" },
+    { metric: "MediSaarthi AI Intake + Review", timePerPatient: "4.2 mins", throughput: "14.2 pts/hr" }
+  ]
+};
+
