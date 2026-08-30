@@ -334,8 +334,9 @@ export default function MedicationInventoryPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
+                ))
+              )}
+            </tbody>
             </table>
           </div>
         </Card>

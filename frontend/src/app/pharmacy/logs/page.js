@@ -210,8 +210,9 @@ export default function FulfillmentLogsPage() {
                       </Button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
+                ))
+              )}
+            </tbody>
             </table>
           </div>
         </Card>
