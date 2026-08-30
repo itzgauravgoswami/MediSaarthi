@@ -8,105 +8,19 @@ const clinicalHistoryService = require('../services/clinical/clinicalHistory.ser
 const timelineService = require('../services/timeline/timeline.service');
 const { sendSuccess, sendCreated, sendPaginated } = require('../utils/response');
 const { parsePagination } = require('../utils/pagination');
-const { NotFoundError } = require('../utils/errors');
+const { NotFoundError, ValidationError } = require('../utils/errors');
 const AuditLog = require('../models/AuditLog');
-
-const FALLBACK_PATIENTS = [
-  {
-    id: "P102",
-    patientId: "P102",
-    token: "#102",
-    name: "Rahul Kumar",
-    age: 45,
-    gender: "Male",
-    phone: "+91 98765 43210",
-    abhaId: "91-4829-1039-4821",
-    language: "hi",
-    preferredLanguage: "hi-IN",
-    chiefComplaint: "Chest Pain with Breathlessness",
-    intakeStatus: "Completed",
-    redFlag: "Attention Required",
-    priority: "High",
-    status: "Waiting",
-    assignedDoctor: "Dr. Sharma",
-    consultationTime: "10:30 AM",
-    date: "28 Aug 2026",
-    isVerified: false,
-    historyOfPresentIllness: "Patient reports substernal chest pain for approximately three days. Pain reportedly increases during physical activity.",
-    pastMedicalHistory: "Essential Hypertension, Type 2 Diabetes Mellitus.",
-    medicationHistory: [
-      { name: "Metformin", dosage: "500 mg", frequency: "BD", source: "OCR", confidence: 94 },
-      { name: "Amlodipine", dosage: "5 mg", frequency: "OD", source: "OCR", confidence: 91 }
-    ],
-    timeline: [
-      { id: "T1", date: "28 Aug 2026", type: "Consultation", title: "Current Intake", desc: "Substernal chest pain with exertional breathlessness.", badge: "Red Flag" }
-    ],
-    documents: []
-  },
-  {
-    id: "P103",
-    patientId: "P103",
-    token: "#103",
-    name: "Priya Patel",
-    age: 32,
-    gender: "Female",
-    phone: "+91 98123 45678",
-    abhaId: "91-1234-5678-9012",
-    language: "hi",
-    preferredLanguage: "hi-IN",
-    chiefComplaint: "High Fever & Joint Pain (3 Days)",
-    intakeStatus: "Completed",
-    redFlag: "Normal",
-    priority: "Normal",
-    status: "Waiting",
-    assignedDoctor: "Dr. Sharma",
-    consultationTime: "10:45 AM",
-    date: "28 Aug 2026",
-    isVerified: false,
-    historyOfPresentIllness: "Acute onset intermittent high-grade fever with rigors and polyarthralgia for three days.",
-    pastMedicalHistory: "None reported.",
-    medicationHistory: [
-      { name: "Paracetamol", dosage: "650 mg", frequency: "TDS", source: "PATIENT", confidence: 95 }
-    ]
-  },
-  {
-    id: "P104",
-    patientId: "P104",
-    token: "#104",
-    name: "Amitabh Banerjee",
-    age: 58,
-    gender: "Male",
-    phone: "+91 97456 12389",
-    abhaId: "91-9988-7766-5544",
-    language: "bn",
-    preferredLanguage: "bn-IN",
-    chiefComplaint: "Chronic Cough & Dyspnea on Exertion",
-    intakeStatus: "In Progress",
-    redFlag: "Normal",
-    priority: "Normal",
-    status: "Waiting",
-    assignedDoctor: "Dr. Sharma",
-    consultationTime: "11:00 AM",
-    date: "28 Aug 2026",
-    isVerified: false
-  }
-];
 
 class PatientController {
   async getAllPatients(req, res, next) {
     try {
       const pagination = parsePagination(req.query);
-      let patients = [];
+      const patients = await Patient.find()
+        .sort({ createdAt: -1 })
+        .skip(pagination.skip)
+        .limit(pagination.limit);
 
-      try {
-        patients = await Patient.find().sort({ createdAt: -1 }).skip(pagination.skip).limit(pagination.limit);
-      } catch (e) {}
-
-      if (!patients || patients.length === 0) {
-        patients = FALLBACK_PATIENTS;
-      }
-
-      return res.status(200).json(patients); // Maintain direct array compatibility with frontend
+      return res.status(200).json(patients || []);
     } catch (err) {
       next(err);
     }
@@ -115,28 +29,31 @@ class PatientController {
   async getPatientById(req, res, next) {
     try {
       const id = req.params.id;
-      let patient = null;
+      const isObjectId = id && id.match(/^[0-9a-fA-F]{24}$/);
+      const query = isObjectId
+        ? { $or: [{ patientId: id }, { _id: id }] }
+        : { patientId: id };
 
-      try {
-        patient = await Patient.findOne({ $or: [{ patientId: id }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }] });
-      } catch (e) {}
+      const patient = await Patient.findOne(query);
 
       if (!patient) {
-        patient = FALLBACK_PATIENTS.find(p => p.id === id || p.patientId === id) || FALLBACK_PATIENTS[0];
+        throw new NotFoundError(`Patient with ID '${id}' not found.`);
       }
 
-      // Attach timeline and history
-      const history = await clinicalHistoryService.getClinicalHistory(id);
-      const timeline = await timelineService.getPatientTimeline(id);
+      // Attach timeline and clinical history
+      const [history, timeline] = await Promise.all([
+        clinicalHistoryService.getClinicalHistory(id).catch(() => null),
+        timelineService.getPatientTimeline(id).catch(() => [])
+      ]);
 
       const enriched = {
-        ...((patient.toObject ? patient.toObject() : patient)),
+        ...(patient.toObject ? patient.toObject() : patient),
         id: patient.patientId || patient.id || id,
-        historyOfPresentIllness: history.historyOfPresentIllness?.summaryNarrative || patient.historyOfPresentIllness || 'History recorded.',
-        pastMedicalHistory: history.pastMedicalHistory?.join(', ') || patient.pastMedicalHistory || 'None',
-        medicationHistory: history.medications || patient.medicationHistory || [],
+        historyOfPresentIllness: history?.historyOfPresentIllness?.summaryNarrative || null,
+        pastMedicalHistory: history?.pastMedicalHistory?.join(', ') || null,
+        medicationHistory: history?.medications || [],
         timeline: timeline || [],
-        isVerified: patient.isVerified || history.verificationStatus === 'DOCTOR_VERIFIED'
+        isVerified: patient.isVerified || history?.verificationStatus === 'DOCTOR_VERIFIED'
       };
 
       return res.status(200).json(enriched);
@@ -147,11 +64,34 @@ class PatientController {
 
   async createPatient(req, res, next) {
     try {
+      const { name, phone, age, gender } = req.body;
+      if (!name || !phone || !age || !gender) {
+        return res.status(400).json({
+          success: false,
+          message: 'name, phone, age, and gender are required fields'
+        });
+      }
+
       const patientId = `P-${uuidv4().substring(0, 6).toUpperCase()}`;
       const patient = await Patient.create({
         patientId,
         ...req.body
       });
+
+      // Audit log
+      try {
+        await AuditLog.create({
+          auditId: `AUD-${uuidv4().substring(0, 8).toUpperCase()}`,
+          actorId: req.user?.id || 'SYSTEM',
+          actorRole: req.user?.role || 'SYSTEM',
+          actorName: req.user?.name || 'System',
+          action: 'PATIENT_CREATED',
+          resourceType: 'Patient',
+          resourceId: patientId,
+          ipAddress: req.ip
+        });
+      } catch (e) {}
+
       return sendCreated(res, patient, 'Patient registered successfully');
     } catch (err) {
       next(err);
@@ -161,7 +101,16 @@ class PatientController {
   async updatePatient(req, res, next) {
     try {
       const id = req.params.id;
-      const patient = await Patient.findOneAndUpdate({ patientId: id }, req.body, { new: true });
+      const patient = await Patient.findOneAndUpdate(
+        { patientId: id },
+        { ...req.body, updatedAt: new Date() },
+        { new: true }
+      );
+
+      if (!patient) {
+        throw new NotFoundError(`Patient with ID '${id}' not found.`);
+      }
+
       return sendSuccess(res, patient, 'Patient profile updated');
     } catch (err) {
       next(err);
@@ -171,11 +120,18 @@ class PatientController {
   async recordIntake(req, res, next) {
     try {
       const intakeData = req.body;
-      const token = `#${Math.floor(100 + Math.random() * 900)}`;
+      if (!intakeData || !intakeData.patientId) {
+        return res.status(400).json({ success: false, message: 'patientId is required for intake' });
+      }
+
+      // Find the patient to get their real token
+      const patient = await Patient.findOne({ patientId: intakeData.patientId });
+      const token = patient?.token || intakeData.patientId;
 
       return sendSuccess(res, {
         success: true,
         token,
+        patientId: intakeData.patientId,
         message: 'Patient intake recorded successfully'
       });
     } catch (err) {
@@ -186,28 +142,29 @@ class PatientController {
   async verifyPatientSummary(req, res, next) {
     try {
       const id = req.params.id;
-      const doctorName = req.body.doctorName || req.user?.name || 'Dr. Sharma';
+      const doctorName = req.user?.name || req.body.doctorName;
 
-      let patient = await Patient.findOne({ patientId: id });
-      if (patient) {
-        patient.isVerified = true;
-        patient.verifiedBy = doctorName;
-        patient.verifiedAt = new Date();
-        await patient.save();
-      } else {
-        patient = FALLBACK_PATIENTS.find(p => p.id === id) || FALLBACK_PATIENTS[0];
-        patient.isVerified = true;
-        patient.verifiedBy = doctorName;
-        patient.verifiedAt = new Date().toISOString();
+      if (!doctorName) {
+        return res.status(400).json({ success: false, message: 'doctorName is required' });
       }
 
-      await clinicalHistoryService.verifyHistory(id, doctorName, req.body.changes);
+      const patient = await Patient.findOne({ patientId: id });
+      if (!patient) {
+        throw new NotFoundError(`Patient with ID '${id}' not found.`);
+      }
+
+      patient.isVerified = true;
+      patient.verifiedBy = doctorName;
+      patient.verifiedAt = new Date();
+      await patient.save();
+
+      await clinicalHistoryService.verifyHistory(id, doctorName, req.body.changes).catch(() => {});
 
       // Audit Log
       try {
         await AuditLog.create({
           auditId: `AUD-${uuidv4().substring(0, 8).toUpperCase()}`,
-          actorId: req.user?.id || 'DOC-101',
+          actorId: req.user?.id || 'DOCTOR',
           actorRole: 'DOCTOR',
           actorName: doctorName,
           action: 'SUMMARY_VERIFIED',

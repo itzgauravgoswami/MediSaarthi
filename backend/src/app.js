@@ -15,7 +15,8 @@ const ayushRoutes = require('./routes/ayush.routes');
 const adminRoutes = require('./routes/admin.routes');
 const healthRoutes = require('./routes/health.routes');
 const speechRoutes = require('./routes/speech.routes');
-
+const emergencyRoutes = require('./routes/emergency.routes');
+const doctorRoutes = require('./routes/doctor.routes');
 const documentRoutes = require('./routes/document.routes');
 
 const app = express();
@@ -39,8 +40,12 @@ app.use('/api/v1', apiV1Router);
 
 // Backwards Compatibility for existing frontend routes
 app.use('/api/patients', patientRoutes);
+app.use('/api/doctors', doctorRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/triage', redFlagRoutes);
+app.use('/api/emergency', emergencyRoutes);
+app.use('/api/emergency-events', emergencyRoutes);
+app.use('/api/voice', emergencyRoutes);
 app.use('/api/ayush', ayushRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/speech', speechRoutes);

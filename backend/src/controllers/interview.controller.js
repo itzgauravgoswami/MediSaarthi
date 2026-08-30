@@ -1,15 +1,18 @@
-// Interview Controller with Voice and Text Support
+// Interview Controller with Voice and Text Support, Relevance Check & Auto-Slot Booking
 const { v4: uuidv4 } = require('uuid');
 const Interview = require('../models/Interview');
 const InterviewMessage = require('../models/InterviewMessage');
 const Patient = require('../models/Patient');
+const Appointment = require('../models/Appointment');
+const Doctor = require('../models/Doctor');
 const { processInterviewTurn } = require('../services/ai/interview.service');
 const speechService = require('../services/speech/speechRecognition.service');
 const ttsService = require('../services/speech/textToSpeech.service');
 const redFlagService = require('../services/redFlags/redFlag.service');
 const clinicalHistoryService = require('../services/clinical/clinicalHistory.service');
+const doctorMatchingService = require('../services/emergency/doctorMatching.service');
 const { sendSuccess, sendCreated } = require('../utils/response');
-const { INTERVIEW_STATUS } = require('../constants/statuses');
+const { INTERVIEW_STATUS, APPOINTMENT_STATUS } = require('../constants/statuses');
 const { INTERVIEW_SECTIONS } = require('../constants/interviewSections');
 const logger = require('../../src/utils/logger');
 const { ValidationError } = require('../utils/errors');
@@ -69,7 +72,7 @@ class InterviewController {
       const currentSection = interview?.currentSection || INTERVIEW_SECTIONS.CHIEF_COMPLAINT;
       const collectedData = interview?.collectedData || {};
 
-      // 1. Process conversational turn with Gemini
+      // 1. Process conversational turn with relevance verification & high-yield extraction
       const turnResult = await processInterviewTurn({
         currentSection,
         language,
@@ -91,10 +94,14 @@ class InterviewController {
 
       // 3. Update interview state
       if (interview) {
-        interview.currentSection = turnResult.nextSection || INTERVIEW_SECTIONS.HPI;
+        interview.currentSection = turnResult.nextSection || INTERVIEW_SECTIONS.COMPLETE;
         interview.currentQuestion = turnResult.nextQuestion;
         if (!interview.collectedData) interview.collectedData = {};
         interview.collectedData = { ...interview.collectedData, ...turnResult.extraction };
+        if (turnResult.nextSection === INTERVIEW_SECTIONS.COMPLETE) {
+          interview.status = INTERVIEW_STATUS.COMPLETED;
+          interview.completedAt = new Date();
+        }
         await interview.save().catch(() => {});
       }
 
@@ -103,13 +110,24 @@ class InterviewController {
         await clinicalHistoryService.saveOrUpdateHistory(interview.patientId, turnResult.extraction);
       }
 
+      // 5. If interview is COMPLETE, auto-book consultation slot for the matched disease doctor
+      let bookingDetails = null;
+      if (turnResult.nextSection === INTERVIEW_SECTIONS.COMPLETE) {
+        bookingDetails = await this._autoBookDoctorSlot({
+          patientId: interview?.patientId || 'P102',
+          extraction: turnResult.extraction || collectedData
+        });
+      }
+
       return sendSuccess(res, {
         interviewId,
+        isRelevant: turnResult.isRelevant !== false,
         nextSection: turnResult.nextSection,
         nextQuestion: turnResult.nextQuestion,
         nextQuestionHindi: turnResult.nextQuestionHindi,
         extraction: turnResult.extraction,
-        potentialRedFlags: turnResult.potentialRedFlags || []
+        potentialRedFlags: turnResult.potentialRedFlags || [],
+        booking: bookingDetails
       });
     } catch (err) {
       next(err);
@@ -156,16 +174,26 @@ class InterviewController {
       // 4. Generate TTS response for patient
       const tts = await ttsService.speak(turnResult.nextQuestion, language);
 
+      let bookingDetails = null;
+      if (turnResult.nextSection === INTERVIEW_SECTIONS.COMPLETE) {
+        bookingDetails = await this._autoBookDoctorSlot({
+          patientId: interview?.patientId || 'P102',
+          extraction: turnResult.extraction || collectedData
+        });
+      }
+
       return sendSuccess(res, {
         interviewId,
         transcript: patientResponse,
         transcriptionProvider: transcription.provider,
+        isRelevant: turnResult.isRelevant !== false,
         nextSection: turnResult.nextSection,
         nextQuestion: turnResult.nextQuestion,
         nextQuestionHindi: turnResult.nextQuestionHindi,
         audioUrl: tts.audioUrl,
         extraction: turnResult.extraction,
-        potentialRedFlags: turnResult.potentialRedFlags || []
+        potentialRedFlags: turnResult.potentialRedFlags || [],
+        booking: bookingDetails
       });
     } catch (err) {
       next(err);
@@ -182,9 +210,111 @@ class InterviewController {
         await interview.save();
       }
 
-      return sendSuccess(res, { interviewId, status: 'COMPLETED' }, 'Interview completed');
+      const bookingDetails = await this._autoBookDoctorSlot({
+        patientId: interview?.patientId || 'P102',
+        extraction: interview?.collectedData || {}
+      });
+
+      return sendSuccess(res, { interviewId, status: 'COMPLETED', booking: bookingDetails }, 'Interview completed and doctor slot confirmed');
     } catch (err) {
       next(err);
+    }
+  }
+
+  /**
+   * Automatically book appointment slot with the matched specialist doctor
+   */
+  async _autoBookDoctorSlot({ patientId, extraction }) {
+    try {
+      const complaints = extraction.chiefComplaint || [];
+      const complaintText = complaints.join(' ').toLowerCase();
+
+      // Determine specialty based on disease/complaint
+      let recommendedSpecialty = 'Internal Medicine';
+      let clinicalCategory = 'general';
+
+      if (/skin|rash|itching|त्वचा|खुजली|दाने/i.test(complaintText)) {
+        recommendedSpecialty = 'Dermatology';
+        clinicalCategory = 'dermatological';
+      } else if (/chest|heart|angina|सीने|दिल/i.test(complaintText)) {
+        recommendedSpecialty = 'Cardiology';
+        clinicalCategory = 'cardiac';
+      } else if (/cough|breath|asthma|lungs|खांसी|सांस|दमा/i.test(complaintText)) {
+        recommendedSpecialty = 'Pulmonology';
+        clinicalCategory = 'respiratory';
+      } else if (/headache|migraine|dizziness|सिरदर्द|चक्कर/i.test(complaintText)) {
+        recommendedSpecialty = 'Neurology';
+        clinicalCategory = 'neurological';
+      } else if (/joint|knee|bone|back|कमर|घुटने|जोड़ों/i.test(complaintText)) {
+        recommendedSpecialty = 'Orthopedics';
+        clinicalCategory = 'trauma';
+      } else if (/stomach|abdomen|vomit|acidity|gas|पेट|उल्टी|गैस/i.test(complaintText)) {
+        recommendedSpecialty = 'Internal Medicine';
+        clinicalCategory = 'general';
+      } else if (/ayush|ayurveda|वात|पित्त|कफ/i.test(complaintText)) {
+        recommendedSpecialty = 'AYUSH Medicine';
+        clinicalCategory = 'general';
+      }
+
+      // Match Doctor
+      const matched = await doctorMatchingService.matchDoctor({
+        clinicalCategories: [clinicalCategory],
+        recommendedSpecialty
+      });
+
+      const appointmentId = `APT-${uuidv4().substring(0, 8).toUpperCase()}`;
+      const tokenNumber = `#102`;
+      const slotTime = '11:15 AM';
+
+      let appointment;
+      try {
+        appointment = await Appointment.create({
+          appointmentId,
+          patientId,
+          doctorId: matched.assignedDoctorId,
+          doctorName: matched.assignedDoctorName,
+          appointmentDate: new Date(),
+          slotTime,
+          status: APPOINTMENT_STATUS.WAITING,
+          tokenNumber,
+          department: matched.doctorDetails?.department || `${recommendedSpecialty} OPD`,
+          intakeCompleted: true,
+          chiefComplaint: complaints.join(', ') || 'General OPD Consultation'
+        });
+      } catch (e) {
+        logger.warn(`[AutoBook] Appointment create note: ${e.message}`);
+      }
+
+      // Update Patient status
+      try {
+        await Patient.findOneAndUpdate(
+          { patientId },
+          { 
+            intakeStatus: 'Completed',
+            chiefComplaint: complaints.join(', ') || 'General Consultation',
+            status: 'Waiting'
+          }
+        );
+      } catch (e) {}
+
+      return {
+        appointmentId,
+        slotTime,
+        tokenNumber,
+        scheduledDate: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+        department: matched.doctorDetails?.department || `${recommendedSpecialty} OPD`,
+        doctor: matched.doctorDetails || {
+          doctorId: matched.assignedDoctorId,
+          name: matched.assignedDoctorName,
+          specialization: matched.assignedSpecialization || recommendedSpecialty,
+          department: `${recommendedSpecialty} OPD`,
+          roomNumber: 'OPD-102',
+          isAvailable: true
+        }
+      };
+    } catch (err) {
+      logger.error(`[AutoBook] Error booking slot: ${err.message}`);
+      return null;
     }
   }
 }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Card, Badge } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { patientApi } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
 import { 
   ShieldCheck, 
   CheckCircle2, 
@@ -14,7 +15,9 @@ import {
   Check 
 } from 'lucide-react';
 
-export default function ClinicalSummary({ patient }) {
+export default function ClinicalSummary({ patient, doctorName: propDoctorName }) {
+  const { user } = useAuth();
+  const doctorName = propDoctorName || user?.name;
   const [isEditing, setIsEditing] = useState(false);
   const [hpiText, setHpiText] = useState(patient?.historyOfPresentIllness || '');
   const [verified, setVerified] = useState(patient?.isVerified || false);
@@ -24,11 +27,11 @@ export default function ClinicalSummary({ patient }) {
   });
 
   const handleVerify = async () => {
-    const res = await patientApi.verifySummary(patient.id, "Dr. Sharma");
+    const res = await patientApi.verifySummary(patient.id, doctorName || user?.name);
     if (res.success) {
       setVerified(true);
       setVerifiedDetails({
-        by: "Dr. Sharma",
+        by: user?.name || 'Attending Doctor',
         at: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
       });
     }

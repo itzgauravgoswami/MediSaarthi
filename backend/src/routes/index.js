@@ -18,10 +18,13 @@ const analyticsRoutes = require('./analytics.routes');
 const adminRoutes = require('./admin.routes');
 const fhirRoutes = require('./fhir.routes');
 const healthRoutes = require('./health.routes');
+const emergencyRoutes = require('./emergency.routes');
+const doctorRoutes = require('./doctor.routes');
 
 // Mount domain routes on /api/v1
 router.use('/auth', authRoutes);
 router.use('/patients', patientRoutes);
+router.use('/doctors', doctorRoutes);
 router.use('/interviews', interviewRoutes);
 router.use('/documents', documentRoutes);
 router.use('/speech', speechRoutes);
@@ -37,5 +40,8 @@ router.use('/analytics', analyticsRoutes);
 router.use('/admin', adminRoutes);
 router.use('/fhir', fhirRoutes);
 router.use('/health', healthRoutes);
+router.use('/emergency', emergencyRoutes);
+router.use('/voice', emergencyRoutes);
+router.use('/', emergencyRoutes); // Mounts /emergency-events at /api/v1/emergency-events
 
 module.exports = router;

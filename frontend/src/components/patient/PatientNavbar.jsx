@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import { LayoutDashboard, ShieldCheck, Mic, FileText, CheckCircle2, Moon, Sun, Stethoscope } from 'lucide-react';
 
@@ -13,6 +14,7 @@ export default function PatientNavbar({ activeTab = '' }) {
   const pathname = usePathname();
   const { language } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const isHindi = language === 'hi';
 
   const navItems = [
@@ -78,9 +80,11 @@ export default function PatientNavbar({ activeTab = '' }) {
         >
           {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-[#0F4C5C]" />}
         </button>
-        <span className="hidden sm:flex px-2.5 py-0.5 rounded-full bg-[#0F4C5C]/10 text-[#18A999] border border-[#18A999]/30 text-[11px] font-bold font-mono">
-          TOKEN #102
-        </span>
+        {user?.token && (
+          <span className="hidden sm:flex px-2.5 py-0.5 rounded-full bg-[#0F4C5C]/10 text-[#18A999] border border-[#18A999]/30 text-[11px] font-bold font-mono">
+            TOKEN {user.token}
+          </span>
+        )}
       </div>
     </header>
   );

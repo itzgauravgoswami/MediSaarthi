@@ -16,10 +16,10 @@ if (config.ai.geminiApiKey) {
 
 // Model fallback cascade pool with active Gemini models
 const MODEL_CANDIDATES = [
-  config.ai.geminiModel || 'gemini-3.5-flash',
+  config.ai.geminiModel || 'gemini-3.6-flash',
+  'gemini-3.6-flash',
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
-  'gemini-3.6-flash',
   'gemini-3.7-flash'
 ];
 

@@ -5,6 +5,8 @@ const runSecurityTests = require('./security/auth.test');
 const runOcrTests = require('./unit/ocr.test');
 const runSpeechTests = require('./unit/speech.test');
 const runStorageTests = require('./unit/storage.test');
+const runEmergencyTests = require('./unit/emergency.test');
+const { connectDB } = require('../src/config/database');
 
 async function runAllTests() {
   console.log('================================================================');
@@ -12,6 +14,10 @@ async function runAllTests() {
   console.log('================================================================');
 
   try {
+    await connectDB();
+    console.log('');
+    await runEmergencyTests();
+    console.log('');
     runRedFlagTests();
     console.log('');
     runFhirTests();
@@ -25,7 +31,7 @@ async function runAllTests() {
     await runStorageTests();
     console.log('');
     console.log('================================================================');
-    console.log('🎉 ALL TESTS (OCR, SPEECH, STORAGE, FHIR, SECURITY) PASSED 100%!');
+    console.log('🎉 ALL TESTS (EMERGENCY, OCR, SPEECH, STORAGE, FHIR, SECURITY) PASSED 100%!');
     console.log('================================================================');
     process.exit(0);
   } catch (err) {

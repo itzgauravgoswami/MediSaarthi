@@ -67,7 +67,7 @@ function LoginFormContent() {
       sub: "Start AI voice intake, upload prescriptions, and view your token.",
       icon: Hospital,
       badge: "Patient OPD Kiosk",
-      defaultEmail: "rahul.kumar@gmail.com",
+      defaultEmail: "patient@medisaarthi.health",
       redirect: "/patient/dashboard"
     },
     pharmacy: {

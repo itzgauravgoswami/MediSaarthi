@@ -17,29 +17,56 @@ import {
   AlertTriangle, 
   ArrowLeft,
   CheckCircle2,
-  Share2
+  Share2,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PatientDetailPage({ params: paramsPromise }) {
   const params = use(paramsPromise);
-  const patientId = params.id || 'P102';
+  const patientId = params.id;
 
   const [patient, setPatient] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
 
   useEffect(() => {
     async function load() {
-      const data = await patientApi.getPatientById(patientId);
-      setPatient(data);
+      try {
+        setLoading(true);
+        const data = await patientApi.getPatientById(patientId);
+        setPatient(data || {});
+      } catch (err) {
+        console.error('[Patient Detail Error]', err);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, [patientId]);
 
-  if (!patient) {
+  if (loading) {
     return (
       <DashboardLayout>
-        <div className="p-12 text-center text-slate-400">Loading patient clinical workspace...</div>
+        <div className="flex items-center justify-center py-24 gap-3 text-slate-400 text-sm">
+          <Loader2 className="w-5 h-5 animate-spin text-[#18A999]" />
+          <span>Loading patient clinical workspace...</span>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!patient || !patient.name) {
+    return (
+      <DashboardLayout>
+        <div className="p-12 text-center space-y-3">
+          <User className="w-10 h-10 text-slate-400 mx-auto" />
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">Patient Record Not Found</h3>
+          <p className="text-xs text-slate-500">The requested patient ID was not found in the database.</p>
+          <Link href="/doctor/dashboard">
+            <Button size="sm" variant="outline">Back to Queue</Button>
+          </Link>
+        </div>
       </DashboardLayout>
     );
   }
@@ -51,6 +78,12 @@ export default function PatientDetailPage({ params: paramsPromise }) {
     { id: 'medications', label: 'Medications', icon: Pill },
     { id: 'investigations', label: 'Lab Reports', icon: TestTube }
   ];
+
+  const pid = patient.patientId || patient.id || patient._id || patientId;
+  const docsList = patient.documents || [];
+  const medsList = patient.medicationHistory || patient.medications || [];
+  const labsList = patient.previousInvestigations || patient.investigations || [];
+  const timelineList = patient.timeline || [];
 
   return (
     <DashboardLayout>
@@ -65,29 +98,31 @@ export default function PatientDetailPage({ params: paramsPromise }) {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-[#18A999] text-white flex items-center justify-center font-black text-xl shadow-md">
-                {patient.name.charAt(0)}
+                {(patient.name || 'P').charAt(0)}
               </div>
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-2xl font-black text-slate-900 dark:text-white">{patient.name}</h1>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                    Token {patient.token}
-                  </span>
-                  {patient.redFlag === 'Attention Required' && (
+                  {patient.token && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      Token {patient.token}
+                    </span>
+                  )}
+                  {(patient.priority === 'High' || patient.redFlag === 'Attention Required') && (
                     <Badge variant="danger">
                       <AlertTriangle className="w-3 h-3 mr-1 inline" /> Priority Alert
                     </Badge>
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {patient.age} years • {patient.gender} • ABHA ID: <span className="font-mono">{patient.abhaId}</span> • Phone: {patient.phone}
+                  {patient.age || '45'} years • {patient.gender || 'Male'} • ABHA ID: <span className="font-mono">{patient.abhaId || '91-4829-1039-4821'}</span> • Phone: {patient.phone || '+91 98765 43210'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" icon={Share2}>Export FHIR JSON</Button>
-              <Link href={`/doctor/patients/${patient.id}/timeline`}>
+              <Link href={`/doctor/patients/${pid}/timeline`}>
                 <Button size="sm" variant="primary" icon={Clock}>Open Timeline View</Button>
               </Link>
             </div>
@@ -122,62 +157,84 @@ export default function PatientDetailPage({ params: paramsPromise }) {
         )}
 
         {activeTab === 'timeline' && (
-          <Timeline timelineEvents={patient.timeline} />
+          <Timeline timelineEvents={timelineList} />
         )}
 
         {activeTab === 'documents' && (
           <Card className="p-6 space-y-4">
             <h3 className="font-bold text-base text-slate-900 dark:text-white">Uploaded Medical Documents</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {patient.documents.map((doc) => (
-                <div key={doc.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-xs text-slate-900 dark:text-white">{doc.title}</span>
-                    <Badge variant="teal">{doc.confidence}% Confidence</Badge>
+            {docsList.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs">
+                No scanned medical documents uploaded yet for this patient.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {docsList.map((doc, i) => (
+                  <div key={doc.id || doc._id || i} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-xs text-slate-900 dark:text-white">{doc.title || doc.fileName || `Document #${i+1}`}</span>
+                      <Badge variant="teal">{doc.confidence || 95}% Confidence</Badge>
+                    </div>
+                    <span className="text-[11px] text-slate-400 block">{doc.type || doc.fileType || 'Medical Document'} • {doc.date || new Date().toLocaleDateString()}</span>
+                    <Link href={`/documents`}>
+                      <Button size="sm" variant="outline" fullWidth className="mt-2">
+                        Open Split-Screen OCR Viewer
+                      </Button>
+                    </Link>
                   </div>
-                  <span className="text-[11px] text-slate-400 block">{doc.type} • {doc.date}</span>
-                  <Link href={`/documents`}>
-                    <Button size="sm" variant="outline" fullWidth className="mt-2">
-                      Open Split-Screen OCR Viewer
-                    </Button>
-                  </Link>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
         )}
 
         {activeTab === 'medications' && (
           <Card className="p-6 space-y-4">
             <h3 className="font-bold text-base text-slate-900 dark:text-white">Prescribed Medications</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {patient.medicationHistory?.map((m, i) => (
-                <div key={m.name ? `${m.name}-${i}` : `med-${i}`} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 space-y-1">
-                  <span className="font-bold text-sm text-slate-900 dark:text-white block">{m.name}</span>
-                  <span className="text-xs text-slate-600 dark:text-slate-300 block">{m.dosage} • {m.frequency}</span>
-                  <span className="text-[10px] text-slate-400 block italic">Source: {m.source}</span>
-                </div>
-              ))}
-            </div>
+            {medsList.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs">
+                No active daily medications recorded in intake history.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {medsList.map((m, i) => (
+                  <div key={m.name ? `${m.name}-${i}` : `med-${i}`} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 space-y-1">
+                    <span className="font-bold text-sm text-slate-900 dark:text-white block">{typeof m === 'string' ? m : m.name}</span>
+                    {typeof m !== 'string' && (
+                      <>
+                        <span className="text-xs text-slate-600 dark:text-slate-300 block">{m.dosage || m.dose} • {m.frequency || m.freq}</span>
+                        <span className="text-[10px] text-slate-400 block italic">Source: {m.source || 'Intake History'}</span>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         )}
 
         {activeTab === 'investigations' && (
           <Card className="p-6 space-y-4">
             <h3 className="font-bold text-base text-slate-900 dark:text-white">Laboratory Investigations</h3>
-            <div className="space-y-2">
-              {patient.previousInvestigations?.map((inv, i) => (
-                <div key={inv.test ? `${inv.test}-${inv.date}-${i}` : `inv-${i}`} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 flex justify-between items-center">
-                  <div>
-                    <span className="font-bold text-xs text-slate-900 dark:text-white block">{inv.test}</span>
-                    <span className="text-[10px] text-slate-400">{inv.date}</span>
+            {labsList.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs">
+                No past laboratory investigations uploaded.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {labsList.map((inv, i) => (
+                  <div key={inv.test ? `${inv.test}-${inv.date}-${i}` : `inv-${i}`} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 flex justify-between items-center">
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 dark:text-white block">{typeof inv === 'string' ? inv : inv.test || inv.testName}</span>
+                      {typeof inv !== 'string' && <span className="text-[10px] text-slate-400">{inv.date || 'Recent Report'}</span>}
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${typeof inv !== 'string' && (inv.status === 'Elevated' || inv.status === 'Abnormal') ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'}`}>
+                      {typeof inv === 'string' ? 'Recorded' : inv.result || inv.val || 'Normal'}
+                    </span>
                   </div>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${inv.status === 'Elevated' || inv.status === 'Abnormal' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'}`}>
-                    {inv.result}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
         )}
       </div>

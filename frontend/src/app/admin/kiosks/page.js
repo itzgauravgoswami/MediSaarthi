@@ -44,20 +44,30 @@ export default function KiosksPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs font-medium">
-                {kiosks.map((kiosk, idx) => (
-                  <tr key={kiosk.id || kiosk._id || `kiosk-${idx}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="py-4 px-4 font-black text-slate-900 dark:text-white">{kiosk.id}</td>
-                    <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200">{kiosk.location}</td>
-                    <td className="py-4 px-4">
-                      <Badge variant={kiosk.status === 'Online' ? 'success' : kiosk.status === 'Active Session' ? 'teal' : 'warning'}>
-                        {kiosk.status}
-                      </Badge>
+                {kiosks.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12 text-slate-400">
+                      <Hospital className="w-8 h-8 mx-auto mb-2 text-slate-500 opacity-50" />
+                      <p className="font-semibold text-sm">No hospital kiosks registered</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Connected OPD and triage terminals will appear here.</p>
                     </td>
-                    <td className="py-4 px-4 text-slate-500">{kiosk.lastActive}</td>
-                    <td className="py-4 px-4 font-semibold text-slate-700 dark:text-slate-300">{kiosk.session}</td>
-                    <td className="py-4 px-4 text-right font-mono text-slate-400">{kiosk.version}</td>
                   </tr>
-                ))}
+                ) : (
+                  kiosks.map((kiosk, idx) => (
+                    <tr key={kiosk.id || kiosk._id || `kiosk-${idx}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-4 px-4 font-black text-slate-900 dark:text-white">{kiosk.id || kiosk.kioskId}</td>
+                      <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200">{kiosk.location}</td>
+                      <td className="py-4 px-4">
+                        <Badge variant={kiosk.status === 'Online' ? 'success' : kiosk.status === 'Active Session' ? 'teal' : 'warning'}>
+                          {kiosk.status}
+                        </Badge>
+                      </td>
+                      <td className="py-4 px-4 text-slate-500">{kiosk.lastActive ? new Date(kiosk.lastActive).toLocaleTimeString() : '—'}</td>
+                      <td className="py-4 px-4 font-semibold text-slate-700 dark:text-slate-300">{kiosk.session || 'Idle'}</td>
+                      <td className="py-4 px-4 text-right font-mono text-slate-400">{kiosk.version || 'v2.4.0'}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

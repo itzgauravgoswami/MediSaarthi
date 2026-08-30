@@ -66,17 +66,17 @@ export default function DoctorDashboardPreview() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-950 dark:bg-black border border-slate-800 dark:border-[#27272a]">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0F4C5C] to-[#18A999] text-white font-bold flex items-center justify-center text-lg shadow-md font-newsreader">
-                  RK
+                  AS
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-white font-newsreader">Raj Kumar</h3>
+                    <h3 className="text-lg font-bold text-white font-newsreader">Aarav Sharma</h3>
                     <span className="text-xs font-mono font-bold bg-slate-950 dark:bg-black text-slate-400 dark:text-[#18A999] px-2 py-0.5 rounded border border-slate-700 dark:border-[#27272a]">
-                      Patient #A102
+                      Patient #P-101
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 dark:text-[#a1a1aa] font-medium">
-                    45 Years • Male • Language: Hindi / English • OPD Token #14
+                    38 Years • Male • Language: Hindi / English • OPD Token #101
                   </p>
                 </div>
               </div>

@@ -23,99 +23,15 @@ import {
 } from 'lucide-react';
 
 export default function MedicationInventoryPage() {
-  const [inventory, setInventory] = useState([
-    {
-      id: "MED-001",
-      name: "Metformin 500mg",
-      brand: "Glycomet",
-      category: "Antidiabetic",
-      batch: "MT-2026A",
-      expiry: "Dec 2027",
-      quantity: 450,
-      unit: "Strips",
-      price: 45.00,
-      reorderPoint: 100,
-      status: "In Stock"
-    },
-    {
-      id: "MED-002",
-      name: "Paracetamol 650mg",
-      brand: "Dolo 650",
-      category: "Analgesics & Antipyretics",
-      batch: "PCM-9912",
-      expiry: "Aug 2027",
-      quantity: 820,
-      unit: "Strips",
-      price: 32.00,
-      reorderPoint: 150,
-      status: "In Stock"
-    },
-    {
-      id: "MED-003",
-      name: "Azithromycin 500mg",
-      brand: "Azee 500",
-      category: "Antibiotics",
-      batch: "AZ-4410",
-      expiry: "Oct 2026",
-      quantity: 15,
-      unit: "Boxes",
-      price: 115.00,
-      reorderPoint: 30,
-      status: "Low Stock"
-    },
-    {
-      id: "MED-004",
-      name: "Amlodipine 5mg",
-      brand: "Stamlo 5",
-      category: "Cardiovascular",
-      batch: "AM-8812B",
-      expiry: "Mar 2028",
-      quantity: 310,
-      unit: "Strips",
-      price: 28.00,
-      reorderPoint: 80,
-      status: "In Stock"
-    },
-    {
-      id: "MED-005",
-      name: "Pantoprazole 40mg",
-      brand: "Pan 40",
-      category: "Gastrointestinal",
-      batch: "PAN-9011",
-      expiry: "Nov 2026",
-      quantity: 18,
-      unit: "Strips",
-      price: 78.00,
-      reorderPoint: 40,
-      status: "Low Stock"
-    },
-    {
-      id: "MED-006",
-      name: "Insulin Glargine 100IU/ml",
-      brand: "Lantus SoloStar",
-      category: "Endocrinology",
-      batch: "INS-1102",
-      expiry: "Sep 2026",
-      quantity: 4,
-      unit: "Vials",
-      price: 450.00,
-      reorderPoint: 10,
-      status: "Critical"
-    },
-    {
-      id: "MED-007",
-      name: "Aceclofenac + Paracetamol",
-      brand: "Zerodol-P",
-      category: "Analgesics & Antipyretics",
-      batch: "ACE-3312",
-      expiry: "Jan 2028",
-      quantity: 600,
-      unit: "Strips",
-      price: 55.00,
-      reorderPoint: 100,
-      status: "In Stock"
+  const [inventory, setInventory] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('medisaarthi_inventory');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
     }
-  ]);
+    return [];
+  });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -346,8 +262,17 @@ export default function MedicationInventoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-[#1f1f23] text-xs font-medium">
-                {filteredInventory.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-[#111111] transition-colors">
+                {filteredInventory.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-12 text-slate-400">
+                      <Boxes className="w-8 h-8 mx-auto mb-2 text-slate-500 opacity-50" />
+                      <p className="font-semibold text-sm">No medications registered in inventory</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Click "Register New Stock Batch" to add medicine deliveries.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredInventory.map(item => (
+                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-[#111111] transition-colors">
                     <td className="py-3 px-3">
                       <div className="font-bold text-slate-900 dark:text-white text-sm font-newsreader">{item.name}</div>
                       <div className="text-[10px] text-slate-400">Brand: {item.brand} • <span className="font-mono">{item.id}</span></div>

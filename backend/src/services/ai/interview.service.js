@@ -1,4 +1,4 @@
-// Clinical Interview AI Engine with Comprehensive Multilingual Medical NLP
+// Clinical Interview AI Engine with Relevance Verification & Concise Questioning
 const { generateStructuredJson } = require('./gemini.client');
 const { INTERVIEW_PROMPT_TEMPLATE } = require('./prompts/interview.prompt');
 const { INTERVIEW_SECTIONS, SECTION_SEQUENCE } = require('../../constants/interviewSections');
@@ -23,6 +23,59 @@ async function processInterviewTurn({ currentSection, language, patientResponse,
   const fallback = () => generateIntelligentTurnFallback(currentSection, patientResponse, nextSectionCandidate, language, collectedData);
 
   const aiResult = await generateStructuredJson(prompt, fallback);
+
+  // If AI did not set isRelevant or failed to structure properly, run deterministic relevance check
+  const verifiedResult = verifyResponseRelevance(currentSection, patientResponse, aiResult, language, nextSectionCandidate);
+  return verifiedResult;
+}
+
+/**
+ * Deterministic Relevance Verification Guard
+ */
+function verifyResponseRelevance(currentSection, response, aiResult, language, nextSectionCandidate) {
+  const isHindi = (language || '').startsWith('hi');
+  const text = (response || '').trim();
+  const lower = text.toLowerCase();
+
+  // 1. Check CHIEF_COMPLAINT relevance
+  if (currentSection === INTERVIEW_SECTIONS.CHIEF_COMPLAINT) {
+    const isPurelyAge = /^(i am |i'm |my age is )?\d{1,3}(\s*years?(\s*old)?)?$/i.test(text) || /^(\d{1,3}\s*(साल|वर्ष|उम्र))$/i.test(text);
+    const hasGreetingOnly = /^(hi|hello|hey|namaste|नमस्ते|प्रणाम)$/i.test(text);
+    const hasSymptoms = (aiResult.extraction?.chiefComplaint && aiResult.extraction.chiefComplaint.length > 0) ||
+      /fever|pain|cough|cold|headache|stomach|chest|vomit|rash|itching|बुखार|दर्द|खांसी|जुकाम|सिरदर्द|पेट|सीने|उल्टी|खुजली/i.test(lower);
+
+    if ((isPurelyAge || hasGreetingOnly || !hasSymptoms) && (!aiResult.extraction?.chiefComplaint?.length)) {
+      return {
+        ...aiResult,
+        isRelevant: false,
+        nextSection: INTERVIEW_SECTIONS.CHIEF_COMPLAINT,
+        nextQuestion: isHindi 
+          ? "धन्यवाद। क्या आप कृपया बता सकते हैं कि आज आपको क्या मुख्य शारीरिक तकलीफ या लक्षण (जैसे बुखार, दर्द, खांसी आदि) महसूस हो रहे हैं?"
+          : "Thank you. Could you please specify what main symptoms or health difficulties (such as fever, pain, cough, etc.) you are experiencing today?",
+        nextQuestionHindi: "धन्यवाद। क्या आप कृपया बता सकते हैं कि आज आपको क्या मुख्य शारीरिक तकलीफ या लक्षण महसूस हो रहे हैं?"
+      };
+    }
+  }
+
+  // 2. Check DURATION_SEVERITY relevance
+  if (currentSection === INTERVIEW_SECTIONS.DURATION_SEVERITY) {
+    const hasDurationOrTime = aiResult.extraction?.duration || aiResult.extraction?.onset ||
+      /(\d+|एक|दो|तीन|चार|पांच|छह|सात|आठ|दस|one|two|three|four|five|six|seven|ten)\s*(दिन|दिनों|days?|घंटे|hours?|हफ्ते|weeks?|महीने|months?)/i.test(lower) ||
+      /आज|today|सुबह|morning|कल|yesterday|अचानक|sudden|severe|mild|तेज|हल्का|दिन|days/i.test(lower);
+
+    if (!hasDurationOrTime && aiResult.isRelevant === false) {
+      return {
+        ...aiResult,
+        isRelevant: false,
+        nextSection: INTERVIEW_SECTIONS.DURATION_SEVERITY,
+        nextQuestion: isHindi
+          ? "कृपया स्पष्ट करें कि यह तकलीफ आपको कितने दिनों या समय से हो रही है (उदाहरण के लिए: 2 दिन, 1 हफ्ता या आज सुबह से)?"
+          : "Could you please specify how long you have been experiencing this issue (for example: 2 days, 1 week, or since morning)?",
+        nextQuestionHindi: "कृपया स्पष्ट करें कि यह तकलीफ आपको कितने दिनों या समय से हो रही है (जैसे 2 दिन या 1 हफ्ता)?"
+      };
+    }
+  }
+
   return aiResult;
 }
 
@@ -44,21 +97,17 @@ function generateIntelligentTurnFallback(currentSection, response, nextSectionCa
     radiation: collectedData?.radiation || null,
     associatedSymptoms: [...(collectedData?.associatedSymptoms || [])],
     pastMedicalHistory: [...(collectedData?.pastMedicalHistory || [])],
-    medications: [...(collectedData?.medications || [])],
-    allergies: [...(collectedData?.allergies || [])]
+    medications: [...(collectedData?.medications || [])]
   };
 
   const potentialRedFlags = [];
 
-  // Helper to add unique items
   const addComplaint = (c) => { if (!extraction.chiefComplaint.includes(c)) extraction.chiefComplaint.push(c); };
   const addAssociated = (s) => { if (!extraction.associatedSymptoms.includes(s)) extraction.associatedSymptoms.push(s); };
   const addHistory = (h) => { if (!extraction.pastMedicalHistory.includes(h)) extraction.pastMedicalHistory.push(h); };
   const addMed = (m) => { if (!extraction.medications.includes(m)) extraction.medications.push(m); };
 
-  // =========================================================================
-  // 1. DURATION & ONSET PARSING
-  // =========================================================================
+  // 1. Duration / Onset Parsing
   const durationMatch = text.match(/(\d+|एक|दो|तीन|चार|पांच|छह|सात|आठ|दस|one|two|three|four|five|six|seven|ten)\s*(दिन|दिनों|days?|घंटे|hours?|हफ्ते|weeks?|महीने|months?)/i);
   if (durationMatch) {
     extraction.duration = durationMatch[0];
@@ -70,166 +119,68 @@ function generateIntelligentTurnFallback(currentSection, response, nextSectionCa
     extraction.onset = 'Sudden Acute Onset';
   }
 
-  // =========================================================================
-  // 2. CLINICAL CONDITION & SYMPTOM CLASSIFICATION
-  // =========================================================================
-
-  // FEVER / PYREXIA
-  if (lower.includes('बुखार') || lower.includes('fever') || lower.includes('ताप') || lower.includes('temperature') || lower.includes('तप')) {
+  // 2. Symptom & Condition Classification
+  if (lower.includes('बुखार') || lower.includes('fever') || lower.includes('ताप') || lower.includes('temperature')) {
     addComplaint('Fever / Pyrexia');
-    if (lower.includes('102') || lower.includes('103') || lower.includes('104') || lower.includes('101') || lower.includes('100')) {
-      const tempMatch = text.match(/10[0-5](\.[0-9])?/);
-      extraction.severity = tempMatch ? `${tempMatch[0]}°F (High Grade)` : 'High Grade Fever';
-    }
   }
-
-  // CHILLS & RIGORS
-  if (lower.includes('ठंड') || lower.includes('कपकपी') || lower.includes('chills') || lower.includes('shivering') || lower.includes('शीत')) {
-    addAssociated('Rigors & Chills (कपकपी)');
+  if (lower.includes('सीने') || lower.includes('chest') || lower.includes('छाती') || lower.includes('दिल')) {
+    addComplaint('Chest Pain / Precordial Discomfort');
   }
-
-  // CHEST PAIN / CARDIOVASCULAR
-  if (lower.includes('सीने') || lower.includes('chest') || lower.includes('छाती') || lower.includes('angina') || lower.includes('दिल')) {
-    addComplaint('Chest Discomfort / Precordial Pain');
-    extraction.location = 'Retrosternal / Precordial Chest';
-  }
-  if (lower.includes('भारीपन') || lower.includes('heaviness') || lower.includes('दबाव') || lower.includes('pressure') || lower.includes('tightness')) {
-    extraction.character = 'Compressive Heaviness / Pressure';
-  }
-  if (lower.includes('बाएं') || lower.includes('बांह') || lower.includes('arm') || lower.includes('कंधे') || lower.includes('shoulder') || lower.includes('jaw') || lower.includes('जबड़े') || lower.includes('पीठ') || lower.includes('back')) {
-    extraction.radiation = 'Radiating to Left Arm / Shoulder / Jaw';
-  }
-
-  // RESPIRATORY / BREATHLESSNESS
-  if (lower.includes('सांस') || lower.includes('breath') || lower.includes('dyspnea') || lower.includes('दम')) {
-    addAssociated('Dyspnea / Shortness of Breath');
+  if (lower.includes('सांस') || lower.includes('breath') || lower.includes('dyspnea')) {
+    addAssociated('Shortness of Breath');
     if (extraction.chiefComplaint.length === 0) addComplaint('Breathlessness');
   }
-  if (lower.includes('खांसी') || lower.includes('cough') || lower.includes('बलगम') || lower.includes('phlegm') || lower.includes('sputum')) {
-    addAssociated(lower.includes('बलगम') || lower.includes('phlegm') ? 'Productive Cough with Phlegm' : 'Dry Cough');
+  if (lower.includes('खांसी') || lower.includes('cough') || lower.includes('जुकाम') || lower.includes('cold')) {
+    addComplaint('Cough & Upper Respiratory Symptoms');
   }
-  if (lower.includes('सीटी') || lower.includes('wheezing') || lower.includes('जकड़न')) {
-    addAssociated('Bronchial Wheezing / Airway Tightness');
+  if (lower.includes('सिर') || lower.includes('headache') || lower.includes('माथा')) {
+    addComplaint('Headache');
   }
-
-  // HEADACHE / NEUROLOGICAL
-  if (lower.includes('सिर') || lower.includes('headache') || lower.includes('माथा') || lower.includes('migraine')) {
-    addComplaint('Headache (Cephalea)');
-    extraction.location = lower.includes('आधे') || lower.includes('one side') ? 'Unilateral / Migrainous' : 'Frontal / Generalized';
+  if (lower.includes('पेट') || lower.includes('stomach') || lower.includes('abdomen') || lower.includes('गैस') || lower.includes('acidity')) {
+    addComplaint('Abdominal Discomfort / Acidity');
   }
-  if (lower.includes('चक्कर') || lower.includes('dizziness') || lower.includes('vertigo') || lower.includes('धुंधला') || lower.includes('blur')) {
-    addAssociated('Dizziness / Visual Alteration');
-  }
-
-  // GASTROINTESTINAL / ABDOMINAL
-  if (lower.includes('पेट') || lower.includes('stomach') || lower.includes('abdomen') || lower.includes('belly') || lower.includes('acidity') || lower.includes('गैस')) {
-    addComplaint('Abdominal Discomfort / Pain');
-    extraction.location = 'Abdominal Region';
-  }
-  if (lower.includes('उल्टी') || lower.includes('vomit') || lower.includes('nausea') || lower.includes('मतली')) {
-    addAssociated('Nausea / Vomiting');
-  }
-  if (lower.includes('दस्त') || lower.includes('loose motion') || lower.includes('diarrhea') || lower.includes('कब्ज') || lower.includes('constipation')) {
-    addAssociated('Altered Bowel Habits (Diarrhea / Constipation)');
-  }
-
-  // MUSCULOSKELETAL / JOINTS
-  if (lower.includes('घुटने') || lower.includes('knee') || lower.includes('जोड़ों') || lower.includes('joint') || lower.includes('कमर') || lower.includes('back pain') || lower.includes('गर्दन')) {
+  if (lower.includes('घुटने') || lower.includes('knee') || lower.includes('जोड़ों') || lower.includes('joint') || lower.includes('कमर') || lower.includes('back')) {
     addComplaint('Musculoskeletal / Joint Pain');
-    extraction.location = lower.includes('घुटने') ? 'Knee Joints' : (lower.includes('कमर') ? 'Lumbar Spine' : 'Multiple Joints');
+  }
+  if (lower.includes('त्वचा') || lower.includes('skin') || lower.includes('खुजली') || lower.includes('itching') || lower.includes('rash') || lower.includes('दाने')) {
+    addComplaint('Dermatological Condition / Rash');
   }
 
-  // CHRONIC MEDICAL HISTORY
-  if (lower.includes('बीपी') || lower.includes('bp') || lower.includes('blood pressure') || lower.includes('hypertension') || lower.includes('उच्च रक्तचाप')) {
-    addHistory('Essential Hypertension');
+  // 3. Past Medical History & Medications
+  if (lower.includes('बीपी') || lower.includes('bp') || lower.includes('hypertension') || lower.includes('रक्तचाप')) {
+    addHistory('Hypertension');
   }
   if (lower.includes('शुगर') || lower.includes('sugar') || lower.includes('diabetes') || lower.includes('मधुमेह')) {
-    addHistory('Type 2 Diabetes Mellitus');
+    addHistory('Diabetes Mellitus');
   }
   if (lower.includes('थायराइड') || lower.includes('thyroid')) {
-    addHistory('Hypothyroidism');
+    addHistory('Thyroid Disorder');
   }
-  if (lower.includes('अस्थमा') || lower.includes('asthma') || lower.includes('दमा')) {
-    addHistory('Bronchial Asthma');
-  }
-
-  // MEDICATIONS
-  if (lower.includes('मेटफॉर्मिन') || lower.includes('metformin') || lower.includes('glycomet')) addMed('Tab Metformin (Anti-diabetic)');
-  if (lower.includes('एम्लोडिपिन') || lower.includes('amlodipine') || lower.includes('telma') || lower.includes('telmisartan')) addMed('Antihypertensive Medication');
-  if (lower.includes('पैरासिटामोल') || lower.includes('paracetamol') || lower.includes('dolo') || lower.includes('calpol')) addMed('Tab Paracetamol (Antipyretic/Analgesic)');
-
-  // =========================================================================
-  // 3. RED FLAG SAFETY EVALUATION
-  // =========================================================================
-  if (extraction.chiefComplaint.some(c => c.includes('Chest')) && (extraction.radiation || extraction.associatedSymptoms.some(s => s.includes('Dyspnea')))) {
-    potentialRedFlags.push({
-      ruleId: 'RF_CHEST_001',
-      name: isHindi ? 'सीने में तेज दर्द व सांस में रुकावट (तीव्र हृदय जोखिम)' : 'Acute Coronary Syndrome Suspected (RF_CHEST_001)',
-      priority: 'HIGH'
-    });
+  if (lower.includes('पैरासिटामोल') || lower.includes('paracetamol') || lower.includes('dolo') || lower.includes('tablet')) {
+    addMed('Regular Medications Recorded');
   }
 
-  if (extraction.chiefComplaint.some(c => c.includes('Fever')) && lower.includes('104')) {
-    potentialRedFlags.push({
-      ruleId: 'RF_FEVER_002',
-      name: isHindi ? 'अति तीव्र ज्वर (Hyperpyrexia Alert)' : 'Hyperpyrexia Emergency (>104°F)',
-      priority: 'HIGH'
-    });
-  }
-
-  // =========================================================================
-  // 4. CONTEXT-AWARE DYNAMIC QUESTION GENERATION
-  // =========================================================================
+  // 4. Concise Questions Sequence
   let nextQHindi = '';
   let nextQEnglish = '';
 
-  const primaryComplaint = extraction.chiefComplaint[0] || '';
-
-  // Tailor question based on the actual detected disease / complaint
   if (currentSection === INTERVIEW_SECTIONS.CHIEF_COMPLAINT) {
-    if (primaryComplaint.includes('Fever')) {
-      nextQHindi = 'बुखार कितने दिनों से है, क्या ठंड या कपकपी लग रही है, और क्या खांसी या पेशाब में जलन जैसी कोई अन्य तकलीफ है?';
-      nextQEnglish = 'How many days have you had fever, are you having chills or shivering, and do you have cough or burning urination?';
-    } else if (primaryComplaint.includes('Chest')) {
-      nextQHindi = 'सीने का दर्द कब शुरू हुआ, क्या यह बाएं हाथ, जबड़े या कंधे में फैल रहा है, और क्या सांस फूलने या पसीना आने की तकलीफ है?';
-      nextQEnglish = 'When did the chest pain start, does it radiate to your left arm or jaw, and are you having shortness of breath or cold sweats?';
-    } else if (primaryComplaint.includes('Headache')) {
-      nextQHindi = 'सिरदर्द सिर के किस हिस्से में है (माथे पर या एक तरफ), क्या उल्टी या आंखों के आगे धुंधलापन महसूस हो रहा है?';
-      nextQEnglish = 'Which part of the head is aching (forehead or one-sided), and are you experiencing nausea or blurry vision?';
-    } else if (primaryComplaint.includes('Abdominal')) {
-      nextQHindi = 'पेट में दर्द किस जगह है (ऊपर, नाभि के पास या नीचे), और क्या उल्टी, दस्त या गैस की समस्या हो रही है?';
-      nextQEnglish = 'Where exactly is the abdominal pain located, and do you have vomiting, diarrhea, or severe acidity?';
-    } else if (primaryComplaint.includes('Breathlessness')) {
-      nextQHindi = 'सांस लेने में तकलीफ कब से हो रही है, क्या लेटने पर सांस ज्यादा फूलती है, या सीटी जैसी आवाज (Wheezing) आ रही है?';
-      nextQEnglish = 'When did the breathlessness start, is it worse when lying flat, and do you have wheezing sounds?';
-    } else if (primaryComplaint.includes('Joint')) {
-      nextQHindi = 'दर्द किस जोड़ या हिस्से में है, क्या सुबह उठने पर जकड़न या सूजन रहती है, और क्या चलने-फिरने में परेशानी होती है?';
-      nextQEnglish = 'Which joint or body part is painful, is there morning stiffness or swelling, and does it hinder walking?';
-    } else {
-      nextQHindi = 'आपकी यह तकलीफ कब से शुरू हुई है और इसके साथ शरीर में कोई अन्य लक्षण महसूस हो रहे हैं?';
-      nextQEnglish = 'How long have you been experiencing this, and are there any other associated bodily symptoms?';
-    }
-  } else if (currentSection === INTERVIEW_SECTIONS.HPI) {
-    nextQHindi = 'क्या आपको पहले से कोई पुरानी बीमारी है जैसे हाई ब्लड प्रेशर (BP), शुगर (Diabetes), थायराइड, अस्थमा या दिल की बीमारी?';
-    nextQEnglish = 'Do you have any known past medical conditions such as high blood pressure, diabetes, thyroid, asthma, or heart disease?';
-  } else if (currentSection === INTERVIEW_SECTIONS.PAST_HISTORY || currentSection === INTERVIEW_SECTIONS.MEDICATION_HISTORY) {
-    nextQHindi = 'क्या आप रोजाना कोई नियमित दवाइयां ले रहे हैं, और क्या आपको किसी दवा (जैसे पेनिसिलिन, सल्फा) या भोजन से कोई एलर्जी है?';
-    nextQEnglish = 'Are you taking any daily prescription medications, and do you have any known drug or food allergies?';
-  } else if (currentSection === INTERVIEW_SECTIONS.ALLERGY_HISTORY) {
-    nextQHindi = 'धन्यवाद। आपके लक्षणों व स्वास्थ्य इतिहास का संपूर्ण विवरण डॉक्टर परामर्श हेतु तैयार कर लिया गया है।';
-    nextQEnglish = 'Thank you. Your complete clinical history intake has been structured for the physician consult.';
+    const complaint = extraction.chiefComplaint[0] || 'लक्षण';
+    nextQHindi = `यह समस्या आपको कितने दिनों या समय से हो रही है, और क्या इसके साथ कोई अन्य लक्षण (जैसे बुखार, कमजोरी) भी महसूस हो रहे हैं?`;
+    nextQEnglish = `How long have you been experiencing this, and do you have any associated symptoms?`;
+  } else if (currentSection === INTERVIEW_SECTIONS.DURATION_SEVERITY) {
+    nextQHindi = `क्या आपको पहले से कोई पुरानी बीमारी (जैसे BP, शुगर, थायराइड) है या आप कोई नियमित दवा ले रहे हैं?`;
+    nextQEnglish = `Do you have any past medical conditions (such as BP, diabetes, thyroid) or daily medications?`;
   } else {
-    nextQHindi = 'धन्यवाद। आपका स्वास्थ्य विवरण सुरक्षित रूप से दर्ज हो गया है।';
-    nextQEnglish = 'Thank you. Your clinical intake is successfully recorded.';
+    nextQHindi = `धन्यवाद। आपके लक्षणों का विवरण पूरा हो गया है। हम आपके लिए उपयुक्त विशेषज्ञ डॉक्टर के पास अपॉइंटमेंट स्लॉट बुक कर रहे हैं।`;
+    nextQEnglish = `Thank you. Your clinical details are recorded. We are now booking your consultation slot with the specialist doctor.`;
   }
 
   const selectedQuestion = isHindi ? nextQHindi : nextQEnglish;
 
-  logger.info(`[Clinical AI Engine] Processed response: "${text.substring(0, 40)}..." -> Complaints: [${extraction.chiefComplaint.join(', ')}], NextQ: "${selectedQuestion.substring(0, 40)}..."`);
-
   return {
+    isRelevant: true,
     extraction,
-    missingFields: [],
     isSectionComplete: true,
     nextSection: nextSectionCandidate,
     nextQuestion: selectedQuestion,

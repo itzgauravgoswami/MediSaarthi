@@ -7,35 +7,9 @@ import Button from '@/components/ui/Button';
 import { Pill, PackageCheck, CheckCircle2, Clock, AlertCircle, FileText, Search } from 'lucide-react';
 
 export default function PharmacyDashboardPage() {
-  const [prescriptions, setPrescriptions] = useState([
-    {
-      id: "RX-401",
-      patientName: "Rahul Kumar",
-      token: "#102",
-      doctor: "Dr. Ananya Sharma",
-      medications: ["Tab. Metformin 500mg BD", "Tab. Amlodipine 5mg OD"],
-      date: "28 Aug 2026",
-      status: "Pending"
-    },
-    {
-      id: "RX-402",
-      patientName: "Priya Sundaram",
-      token: "#103",
-      doctor: "Dr. Ananya Sharma",
-      medications: ["Tab. Paracetamol 650mg SOS"],
-      date: "28 Aug 2026",
-      status: "Dispensed"
-    },
-    {
-      id: "RX-403",
-      patientName: "Sunita Verma",
-      token: "#104",
-      doctor: "Dr. Mehta",
-      medications: ["Tab. Thyronorm 50mcg OD"],
-      date: "28 Aug 2026",
-      status: "Pending"
-    }
-  ]);
+  const [prescriptions, setPrescriptions] = useState([]);
+  // TODO: Load from GET /api/v1/documents?type=prescription when pharmacy API is implemented
+
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -53,7 +27,7 @@ export default function PharmacyDashboardPage() {
           <div className="space-y-0.5">
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#18A999]">HOSPITAL PHARMACY PORTAL</span>
             <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white font-newsreader">
-              Welcome, Rajesh Verma 👋
+              Pharmacy Dashboard 👋
             </h1>
             <p className="text-xs text-slate-500 dark:text-[#a1a1aa]">
               Central OPD Pharmacy Desk • Prescription OCR Verification & Dispensing
@@ -76,7 +50,7 @@ export default function PharmacyDashboardPage() {
             </div>
             <div>
               <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block">Rx Received Today</span>
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white">18</span>
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white">{prescriptions.length}</span>
             </div>
           </Card>
 

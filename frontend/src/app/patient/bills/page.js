@@ -40,115 +40,51 @@ export default function PatientBillsPage() {
   const [selectedBillForReceipt, setSelectedBillForReceipt] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
-  // Hospital Bills and Invoices
-  const [bills, setBills] = useState([
-    {
-      id: 'INV-2026-OPD-102',
-      title: 'Doctor OPD Consultation - Dr. Arvind Mehta',
-      titleHindi: 'डॉक्टर ओपीडी परामर्श - डॉ. अरविंद मेहता',
-      doctor: 'Dr. Arvind Mehta (Cardiology)',
-      hospital: 'Max Super Speciality Hospital, New Delhi',
-      date: 'Today, 28 Aug 2026',
-      category: 'OPD Consultation',
-      categoryHindi: 'ओपीडी परामर्श',
-      amount: 1200,
-      status: 'Pending',
-      statusHindi: 'भुगतान लंबित',
-      paymentMethod: 'UPI / Desk / Card',
-      dueDate: 'Today before consultation',
-      breakdown: [
-        { item: 'Super-Specialist Doctor Consultation Fee', amount: 1200 },
-        { item: 'AI Multilingual Voice Intake & EMR Triaging', amount: 0, note: 'Free / Included' },
-        { item: 'Hospital Registration & Token Queueing', amount: 0, note: 'Waived' }
-      ]
-    },
-    {
-      id: 'INV-2026-LAB-9041',
-      title: 'Comprehensive Lipid & Biochemistry Pathology Panel',
-      titleHindi: 'लिपिड प्रोफाइल एवं रक्त जांच परीक्षण',
-      doctor: 'Ordered by Dr. Arvind Mehta',
-      hospital: 'Max Healthcare Central Laboratories',
-      date: '27 Aug 2026',
-      category: 'Diagnostic Lab',
-      categoryHindi: 'डायग्नोस्टिक लैब',
-      amount: 1800,
-      status: 'Paid',
-      statusHindi: 'सफलतापूर्वक भुगतान किया',
-      paymentMethod: 'Google Pay (UPI Ref: 62819401284)',
-      paidAt: '27 Aug 2026, 11:15 AM',
-      breakdown: [
-        { item: 'Total Cholesterol & Lipid Sub-fractions', amount: 1200 },
-        { item: 'Serum Creatinine & Kidney Function', amount: 400 },
-        { item: 'Vacutainer & Phlebotomy Collection', amount: 200 }
-      ]
-    },
-    {
-      id: 'INV-2026-ECG-8812',
-      title: '12-Lead High-Definition Digital ECG Tracing',
-      titleHindi: '12-लीड डिजिटल ईसीजी टेस्ट',
-      doctor: 'AIIMS / Max Cardiology Non-Invasive Lab',
-      hospital: 'Max Super Speciality Hospital, New Delhi',
-      date: '28 Aug 2026',
-      category: 'Cardiac Diagnostic',
-      categoryHindi: 'कार्डियक डायग्नोस्टिक',
-      amount: 600,
-      status: 'Paid',
-      statusHindi: 'सफलतापूर्वक भुगतान किया',
-      paymentMethod: 'PhonePe (UPI Ref: 8812049102)',
-      paidAt: '28 Aug 2026, 09:40 AM',
-      breakdown: [
-        { item: '12-Lead Resting Digital ECG Recording', amount: 450 },
-        { item: 'Cardiologist Interpretation & Report Printing', amount: 150 }
-      ]
-    },
-    {
-      id: 'INV-2026-PHARM-3190',
-      title: 'Hospital Pharmacy e-Prescription Dispensation',
-      titleHindi: 'अस्पताल फार्मेसी दवा बिल',
-      doctor: 'Prescribed by Dr. Sameer Malhotra',
-      hospital: 'Max Central Dispensary & Pharmacy Desk',
-      date: '14 Aug 2026',
-      category: 'Pharmacy Meds',
-      categoryHindi: 'फार्मेसी दवाएं',
-      amount: 850,
-      status: 'Paid',
-      statusHindi: 'सफलतापूर्वक भुगतान किया',
-      paymentMethod: 'RuPay Debit Card (**4829)',
-      paidAt: '14 Aug 2026, 05:20 PM',
-      breakdown: [
-        { item: 'Tab. Escitalopram 10mg (15 Strips)', amount: 520 },
-        { item: 'Tab. Clonazepam 0.25mg (7 Tablets)', amount: 230 },
-        { item: 'GST @ 12% on Formulations', amount: 100 }
-      ]
-    },
-    {
-      id: 'CLAIM-PMJAY-99410',
-      title: 'Ayushman Bharat (PMJAY) Daycare Cardiac Monitoring',
-      titleHindi: 'आयुष्मान भारत (PM-JAY) कैशलेस क्लेम',
-      doctor: 'Supervised by Dr. Arvind Mehta',
-      hospital: 'Max Super Speciality Hospital, New Delhi',
-      date: '12 May 2025',
-      category: 'Insurance / Ayushman Claim',
-      categoryHindi: 'बीमा / आयुष्मान क्लेम',
-      amount: 18500,
-      status: 'Insurance Settled',
-      statusHindi: '100% कैशलेस क्लेम स्वीकृत',
-      paymentMethod: 'PM-JAY Golden Card #91-4829-1039',
-      paidAt: '12 May 2025, 06:00 PM',
-      patientShare: 0,
-      breakdown: [
-        { item: 'Emergency Daycare Bed & Vitals Monitoring', amount: 6500 },
-        { item: 'Coronary Angiography Diagnostic Study', amount: 9500 },
-        { item: 'Consumables & Supportive Medications', amount: 2500 },
-        { item: 'Ayushman Bharat PMJAY Cashless Subsidy', amount: -18500, note: '100% Covered' }
-      ]
+  // Real Hospital Bills and Invoices
+  const [bills, setBills] = useState([]);
+
+  // Load custom paid invoices from localStorage & check receipt URL param
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('medisaarthi_invoices');
+      if (stored) {
+        const customInvoices = JSON.parse(stored);
+        if (Array.isArray(customInvoices) && customInvoices.length > 0) {
+          setBills(customInvoices);
+        }
+      }
+
+      // Check if receipt param is present in URL
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const receiptId = params.get('receipt');
+        if (receiptId) {
+          setTimeout(() => {
+            setBills(currentBills => {
+              const matched = currentBills.find(b => b.id === receiptId || b.id.includes(receiptId) || (b.appointmentId && b.appointmentId === receiptId));
+              if (matched) {
+                setSelectedBillForReceipt(matched);
+              }
+              return currentBills;
+            });
+          }, 200);
+        }
+      }
+    } catch (e) {
+      console.warn('[Bills Init Note]', e);
     }
-  ]);
+  }, []);
 
   const handlePayBill = (billId) => {
     setPaymentSuccess(true);
     setTimeout(() => {
-      setBills(prev => prev.map(b => b.id === billId ? { ...b, status: 'Paid', paymentMethod: 'UPI (Instant Kiosk Pay)' } : b));
+      setBills(prev => {
+        const updated = prev.map(b => b.id === billId ? { ...b, status: 'Paid', paymentMethod: 'UPI (Instant Kiosk Pay)' } : b);
+        try {
+          localStorage.setItem('medisaarthi_invoices', JSON.stringify(updated.filter(b => b.status === 'Paid')));
+        } catch (e) {}
+        return updated;
+      });
       setPaymentSuccess(false);
       setSelectedBillForPay(null);
     }, 1500);
@@ -184,14 +120,16 @@ export default function PatientBillsPage() {
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white font-newsreader tracking-tight">
                 {isHindi ? 'अस्पताल बिल एवं भुगतान रसीदें' : 'Hospital Bills & Payment Invoices'}
               </h1>
-              <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#18A999]/15 text-[#18A999] border border-[#18A999]/30 font-mono">
-                Token #102
-              </span>
+              {user?.token && (
+                <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#18A999]/15 text-[#18A999] border border-[#18A999]/30 font-mono">
+                  Token {user.token}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-600 dark:text-[#a1a1aa] max-w-xl leading-relaxed">
               {isHindi 
-                ? 'मैक्स सुपर स्पेशलिटी अस्पताल के सभी ओपीडी शुल्क, लैब इनवॉइस और आयुष्मान भारत क्लेम देखें व ऑनलाइन भुगतान करें।'
-                : 'Manage consultation invoices, diagnostic lab receipts, pharmacy bills, and Ayushman Bharat / Insurance claims.'}
+                ? 'अस्पताल के सभी ओपीडी परामर्श शुल्क, लैब इनवॉइस और भुगतान रसीदें देखें।'
+                : 'Manage consultation invoices, diagnostic lab receipts, and digital hospital payment transactions.'}
             </p>
           </div>
 
@@ -199,7 +137,7 @@ export default function PatientBillsPage() {
           <div className="flex items-center gap-2.5 shrink-0">
             <div className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#27272a] text-xs">
               <span className="text-[10px] text-slate-400 block font-mono">LINKED ABHA ID</span>
-              <span className="font-extrabold text-[#18A999] font-mono">91-4829-1039-4821</span>
+              <span className="font-extrabold text-[#18A999] font-mono">{user?.abhaId || 'Verified'}</span>
             </div>
           </div>
         </div>
@@ -464,7 +402,7 @@ export default function PatientBillsPage() {
                   {isHindi ? 'आपकी भुगतान रसीद पंजीकृत हो गई है।' : `Transaction confirmed for ${selectedBillForPay.id}. Receipt updated.`}
                 </p>
                 <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-mono font-bold text-emerald-800 dark:text-emerald-300">
-                  Paid: ₹{selectedBillForPay.amount} via UPI • Token #102 Active
+                  Paid: ₹{selectedBillForPay.amount} via UPI • Verified & Recorded
                 </div>
               </div>
             ) : (
@@ -536,7 +474,7 @@ export default function PatientBillsPage() {
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-newsreader">
                 {selectedBillForReceipt.hospital}
               </h3>
-              <p className="text-xs text-slate-500">Patient: Rahul Kumar • ABHA: 91-4829-1039-4821 • Token #102</p>
+              <p className="text-xs text-slate-500">Patient: {user?.name || '—'} {user?.abhaId ? `• ABHA: ${user.abhaId}` : ''} {user?.token ? `• Token ${user.token}` : ''}</p>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-black border border-slate-200 dark:border-[#27272a] space-y-1">

@@ -61,7 +61,16 @@ export default function AuditLogsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs font-medium">
-                {filtered.map((log, idx) => {
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12 text-slate-400">
+                      <ShieldCheck className="w-8 h-8 mx-auto mb-2 text-slate-500 opacity-50" />
+                      <p className="font-semibold text-sm">No audit logs found</p>
+                      <p className="text-xs text-slate-500 mt-0.5">System actions, logins, and access events will be logged here.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((log, idx) => {
                   const logKey = log.id || log.auditId || log._id || `log-${idx}`;
                   const logTime = log.timestamp || (log.createdAt ? new Date(log.createdAt).toLocaleString('en-IN') : 'N/A');
                   const logUser = log.user || log.actorName || 'System';
@@ -84,7 +93,7 @@ export default function AuditLogsPage() {
                       </td>
                     </tr>
                   );
-                })}
+                }))}
               </tbody>
             </table>
           </div>

@@ -16,11 +16,11 @@ export default function PatientCompletePage() {
 
         <div className="space-y-2">
           <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#0F4C5C]/10 dark:bg-black text-[#18A999] border border-[#18A999]/30">
-            Token #102 Generated
+            Queue Token Generated
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold font-newsreader tracking-tight">Information Transmitted</h2>
           <p className="text-sm text-slate-600 dark:text-[#a1a1aa] leading-relaxed">
-            Your intake summary and medical timeline have been securely sent to Dr. Sharma's clinical portal.
+            Your intake summary and medical timeline have been securely sent to your assigned doctor's clinical portal.
           </p>
         </div>
 

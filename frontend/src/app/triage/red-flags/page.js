@@ -76,17 +76,13 @@ export default function RedFlagsPage() {
           ) : (
             <div className="space-y-3.5">
               {alerts.map((alert) => {
-                const patientName = alert.patientName && alert.patientName !== 'Patient' 
-                  ? alert.patientName 
-                  : (alert.patientId === 'P105' ? 'Amitabh Sen' : 'Rahul Kumar');
-                const token = alert.token && alert.token !== '#---' 
-                  ? alert.token 
-                  : (alert.patientId === 'P105' ? '#105' : '#102');
-                const age = alert.age && alert.age > 0 ? alert.age : (alert.patientId === 'P105' ? 67 : 45);
-                const gender = alert.gender && alert.gender !== 'Unknown' ? alert.gender : 'Male';
-                const detectedInfo = alert.detectedInfo || alert.description || alert.ruleName || 'Exertional chest discomfort with left arm radiation.';
-                const ruleTriggered = alert.ruleTriggered || alert.ruleId || alert.ruleName || 'chest_pain_with_breathlessness';
-                const time = alert.time || (alert.createdAt ? new Date(alert.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now');
+                const patientName = alert.patientName || 'Unknown Patient';
+                const token = alert.token || '—';
+                const age = alert.age || null;
+                const gender = alert.gender || 'Unknown';
+                const detectedInfo = alert.detectedInfo || alert.description || alert.ruleName || 'Alert triggered';
+                const ruleTriggered = alert.ruleTriggered || alert.ruleId || alert.ruleName || 'rule_unknown';
+                const time = alert.time || (alert.createdAt ? new Date(alert.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null);
 
                 return (
                   <div
@@ -124,7 +120,7 @@ export default function RedFlagsPage() {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-rose-200/50 dark:border-rose-900/40">
-                      <Link href={`/doctor/patients/${alert.patientId || 'P102'}`}>
+                      <Link href={`/doctor/patients/${alert.patientId || alert.id || ''}`}>
                         <Button size="sm" variant="danger" icon={Eye}>
                           Open Patient
                         </Button>

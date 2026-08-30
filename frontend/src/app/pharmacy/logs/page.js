@@ -21,66 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function FulfillmentLogsPage() {
-  const [logs, setLogs] = useState([
-    {
-      id: "FUL-9812",
-      rxId: "RX-400",
-      timestamp: "28 Aug 2026, 10:25 AM",
-      patientName: "Vikram Singh",
-      token: "#101",
-      doctor: "Dr. Rajesh Gupta",
-      medications: [
-        { name: "Tab. Aceclofenac + Paracetamol", qty: 10, batch: "ACE-3312", price: 55.00 },
-        { name: "Gel. Diclofenac Topical", qty: 1, batch: "GEL-0091", price: 120.00 }
-      ],
-      totalAmount: 175.00,
-      pharmacist: "Rajesh Verma (PH-8842)",
-      status: "Completed"
-    },
-    {
-      id: "FUL-9811",
-      rxId: "RX-399",
-      timestamp: "28 Aug 2026, 09:50 AM",
-      patientName: "Kavita Nair",
-      token: "#098",
-      doctor: "Dr. Ananya Sharma",
-      medications: [
-        { name: "Tab. Metformin 500mg", qty: 60, batch: "MT-2026A", price: 90.00 },
-        { name: "Tab. Atorvastatin 10mg", qty: 30, batch: "ATO-1102", price: 145.00 }
-      ],
-      totalAmount: 235.00,
-      pharmacist: "Rajesh Verma (PH-8842)",
-      status: "Completed"
-    },
-    {
-      id: "FUL-9810",
-      rxId: "RX-398",
-      timestamp: "28 Aug 2026, 09:15 AM",
-      patientName: "Amitabh Sen",
-      token: "#095",
-      doctor: "Dr. Mehta",
-      medications: [
-        { name: "Tab. Pantoprazole 40mg", qty: 15, batch: "PAN-9011", price: 117.00 }
-      ],
-      totalAmount: 117.00,
-      pharmacist: "Suresh Rao (PH-9102)",
-      status: "Completed"
-    },
-    {
-      id: "FUL-9809",
-      rxId: "RX-395",
-      timestamp: "27 Aug 2026, 04:30 PM",
-      patientName: "Ramesh Patel",
-      token: "#088",
-      doctor: "Dr. Ananya Sharma",
-      medications: [
-        { name: "Tab. Paracetamol 650mg", qty: 20, batch: "PCM-9912", price: 64.00 }
-      ],
-      totalAmount: 64.00,
-      pharmacist: "Rajesh Verma (PH-8842)",
-      status: "Completed"
-    }
-  ]);
+  const [logs, setLogs] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLog, setSelectedLog] = useState(null);
@@ -212,8 +153,17 @@ export default function FulfillmentLogsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-[#1f1f23] text-xs font-medium">
-                {filteredLogs.map(log => (
-                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-[#111111] transition-colors">
+                {filteredLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-12 text-slate-400">
+                      <ClipboardList className="w-8 h-8 mx-auto mb-2 text-slate-500 opacity-50" />
+                      <p className="font-semibold text-sm">No pharmacy fulfillment transactions recorded</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Dispensed prescriptions and verified medication logs will appear here.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredLogs.map(log => (
+                    <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-[#111111] transition-colors">
                     <td className="py-3 px-3">
                       <div className="font-mono font-bold text-slate-900 dark:text-white text-xs">{log.id}</div>
                       <div className="text-[10px] text-slate-400">{log.timestamp}</div>

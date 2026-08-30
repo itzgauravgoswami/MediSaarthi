@@ -25,79 +25,11 @@ import {
 } from 'lucide-react';
 
 export default function PrescriptionQueuePage() {
-  const [prescriptions, setPrescriptions] = useState([
-    {
-      id: "RX-401",
-      token: "#102",
-      patientName: "Rahul Kumar",
-      patientAge: "42 Yrs / Male",
-      phone: "+91 98765 43210",
-      doctor: "Dr. Ananya Sharma (Cardiology)",
-      date: "28 Aug 2026, 11:15 AM",
-      priority: "Normal",
-      status: "Pending",
-      diagnosis: "Type-2 Diabetes & Essential Hypertension",
-      medications: [
-        { name: "Tab. Metformin 500mg", dose: "1 tab BD (After Meals)", qty: 60, stock: "Available", batch: "MT-2026A" },
-        { name: "Tab. Amlodipine 5mg", dose: "1 tab OD (Morning)", qty: 30, stock: "Available", batch: "AM-8812B" }
-      ],
-      alerts: ["Monitor Blood Pressure weekly"],
-      ocrImage: "/ocr-sample.png"
-    },
-    {
-      id: "RX-402",
-      token: "#103",
-      patientName: "Priya Sundaram",
-      patientAge: "29 Yrs / Female",
-      phone: "+91 98123 76543",
-      doctor: "Dr. Ananya Sharma (General Medicine)",
-      date: "28 Aug 2026, 11:30 AM",
-      priority: "Urgent",
-      status: "Pending",
-      diagnosis: "Acute Febrile Illness & Mild Dehydration",
-      medications: [
-        { name: "Tab. Paracetamol 650mg", dose: "1 tab SOS (Max 3/day)", qty: 10, stock: "Available", batch: "PCM-9912" },
-        { name: "Tab. Azithromycin 500mg", dose: "1 tab OD x 3 days", qty: 3, stock: "Low Stock (5 left)", batch: "AZ-4410" }
-      ],
-      alerts: ["High fever reported - Patient waiting at desk"],
-      ocrImage: "/ocr-sample.png"
-    },
-    {
-      id: "RX-403",
-      token: "#104",
-      patientName: "Sunita Verma",
-      patientAge: "58 Yrs / Female",
-      phone: "+91 97654 32109",
-      doctor: "Dr. Mehta (Endocrinology)",
-      date: "28 Aug 2026, 11:45 AM",
-      priority: "Normal",
-      status: "Pending",
-      diagnosis: "Hypothyroidism",
-      medications: [
-        { name: "Tab. Thyronorm 50mcg", dose: "1 tab OD (Empty Stomach)", qty: 90, stock: "Available", batch: "THY-1092" }
-      ],
-      alerts: [],
-      ocrImage: "/ocr-sample.png"
-    },
-    {
-      id: "RX-400",
-      token: "#101",
-      patientName: "Vikram Singh",
-      patientAge: "35 Yrs / Male",
-      phone: "+91 99887 76655",
-      doctor: "Dr. Rajesh Gupta (Orthopedics)",
-      date: "28 Aug 2026, 10:20 AM",
-      priority: "Normal",
-      status: "Dispensed",
-      diagnosis: "Right Ankle Sprain",
-      medications: [
-        { name: "Tab. Aceclofenac + Paracetamol", dose: "1 tab BD x 5 days", qty: 10, stock: "Available", batch: "ACE-3312" },
-        { name: "Gel. Diclofenac Topical", dose: "Apply twice daily", qty: 1, stock: "Available", batch: "GEL-0091" }
-      ],
-      alerts: [],
-      ocrImage: "/ocr-sample.png"
-    }
-  ]);
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [loadingRx, setLoadingRx] = useState(false);
+  // TODO: Load from GET /api/v1/documents?type=prescription when pharmacy API is implemented
+  // prescriptions are empty until real prescriptions are created by doctors
+
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -119,18 +51,22 @@ export default function PrescriptionQueuePage() {
     setPharmacistPin('');
   };
 
-  const filteredPrescriptions = prescriptions.filter(rx => {
+  const filteredPrescriptions = Array.isArray(prescriptions) ? prescriptions.filter(rx => {
+    const name = rx?.patientName || '';
+    const id = rx?.id || '';
+    const token = rx?.token || '';
+    const doctor = rx?.doctor || '';
+    const term = (searchTerm || '').toLowerCase();
+
     const matchesSearch = 
-      rx.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      rx.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      rx.token.includes(searchTerm) ||
-      rx.doctor.toLowerCase().includes(searchTerm.toLowerCase());
+      name.toLowerCase().includes(term) || 
+      id.toLowerCase().includes(term) || 
+      token.toLowerCase().includes(term) ||
+      doctor.toLowerCase().includes(term);
     
-    if (statusFilter === 'Pending') return matchesSearch && rx.status === 'Pending';
-    if (statusFilter === 'Dispensed') return matchesSearch && rx.status === 'Dispensed';
-    if (statusFilter === 'Urgent') return matchesSearch && rx.priority === 'Urgent';
-    return matchesSearch;
-  });
+    const matchesStatus = statusFilter === 'All' || rx?.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  }) : [];
 
   const pendingCount = prescriptions.filter(p => p.status === 'Pending').length;
   const urgentCount = prescriptions.filter(p => p.priority === 'Urgent' && p.status === 'Pending').length;

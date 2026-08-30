@@ -34,20 +34,22 @@ export default function Sidebar({ collapsed, setCollapsed }) {
   const pathname = usePathname();
   const { role, user, logout } = useAuth();
 
+  const userRole = (role || user?.role || '').toLowerCase();
+
   const doctorNav = [
     { name: 'Doctor Dashboard', href: '/doctor/dashboard', icon: LayoutDashboard },
     { name: 'Patients Queue', href: '/doctor/patients', icon: Users },
     { name: 'Attended Patients', href: '/doctor/attended', icon: UserCheck },
     { name: 'Appointments', href: '/doctor/appointments', icon: Calendar },
     { name: 'Analytics', href: '/doctor/analytics', icon: BarChart3 },
-    { name: 'Red Flags Desk', href: '/triage/red-flags', icon: AlertTriangle, badge: '1' },
+    { name: 'Red Flags Desk', href: '/triage/red-flags', icon: AlertTriangle },
     { name: 'AYUSH Workspace', href: '/ayush', icon: Activity },
   ];
 
   const patientNav = [
     { name: 'Patient Dashboard', href: '/patient/dashboard', icon: LayoutDashboard },
     { name: 'Find Doctors', href: '/patient/doctors', icon: Stethoscope },
-    { name: 'Reports & Prescriptions', href: '/patient/reports', icon: ClipboardList, badge: '5' },
+    { name: 'Reports & Prescriptions', href: '/patient/reports', icon: ClipboardList },
     { name: 'Bills & Invoices', href: '/patient/bills', icon: Receipt },
     { name: 'AI Voice Intake', href: '/patient/interview', icon: Mic },
     { name: 'Upload Documents', href: '/patient/documents', icon: FileText },
@@ -57,7 +59,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
 
   const pharmacyNav = [
     { name: 'Pharmacy Dashboard', href: '/pharmacy/dashboard', icon: LayoutDashboard },
-    { name: 'Prescription Queue', href: '/pharmacy/prescriptions', icon: Pill, badge: '3' },
+    { name: 'Prescription Queue', href: '/pharmacy/prescriptions', icon: Pill },
     { name: 'Medication Inventory', href: '/pharmacy/inventory', icon: PackageCheck },
     { name: 'Fulfillment Logs', href: '/pharmacy/logs', icon: ClipboardList },
   ];
@@ -71,9 +73,9 @@ export default function Sidebar({ collapsed, setCollapsed }) {
   ];
 
   let navItems = doctorNav;
-  if (role === 'patient') navItems = patientNav;
-  if (role === 'pharmacy') navItems = pharmacyNav;
-  if (role === 'admin') navItems = adminNav;
+  if (userRole === 'patient') navItems = patientNav;
+  else if (userRole === 'pharmacy') navItems = pharmacyNav;
+  else if (userRole === 'admin') navItems = adminNav;
 
   return (
     <>

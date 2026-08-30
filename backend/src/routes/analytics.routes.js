@@ -4,6 +4,8 @@ const router = express.Router();
 const analyticsController = require('../controllers/analytics.controller');
 
 router.get('/overview', (req, res, next) => analyticsController.getOverview(req, res, next));
+router.get('/doctor', (req, res, next) => analyticsController.getDoctorAnalytics(req, res, next));
 router.get('/', (req, res, next) => analyticsController.getOverview(req, res, next));
 
 module.exports = router;
+

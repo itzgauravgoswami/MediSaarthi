@@ -11,6 +11,16 @@ class AnalyticsController {
       next(err);
     }
   }
+
+  async getDoctorAnalytics(req, res, next) {
+    try {
+      const doctorId = req.query.doctorId || req.user?.doctorId || null;
+      const data = await analyticsService.getDoctorAnalytics(doctorId);
+      return sendSuccess(res, data);
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = new AnalyticsController();

@@ -85,10 +85,10 @@ export default function Topbar({ collapsed, setCollapsed }) {
                 >
                   <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-bold text-xs">
                     <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
-                    <span>Red Flag: Rahul Kumar (#102)</span>
+                    <span>Red Flag Alert — View Triage Dashboard</span>
                   </div>
                   <p className="text-[11px] text-slate-700 dark:text-slate-200 mt-1 leading-relaxed">
-                    Exertional substernal chest pain reported via voice intake.
+                    A critical symptom was detected during AI voice intake. Immediate review required.
                   </p>
                 </Link>
                 <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/50">
@@ -97,7 +97,7 @@ export default function Topbar({ collapsed, setCollapsed }) {
                     <span>OCR Verification Completed</span>
                   </div>
                   <p className="text-[11px] text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">
-                    Prescription DOC-101 verified with 94% accuracy.
+                    Document OCR verification completed successfully.
                   </p>
                 </div>
               </div>

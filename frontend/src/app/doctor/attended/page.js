@@ -39,17 +39,25 @@ export default function AttendedPatientsPage() {
     loadData();
   }, []);
 
-  const filtered = attendedPatients.filter(p => {
+  const filtered = Array.isArray(attendedPatients) ? attendedPatients.filter(p => {
+    const name = p?.name || '';
+    const token = p?.token || '';
+    const diagnosis = p?.diagnosis || '';
+    const chiefComplaint = p?.chiefComplaint || '';
+    const abhaId = p?.abhaId || '';
+    const term = (searchTerm || '').toLowerCase();
+
     const matchesSearch = 
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.token.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.diagnosis.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.chiefComplaint.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.abhaId.includes(searchTerm);
+      name.toLowerCase().includes(term) ||
+      token.toLowerCase().includes(term) ||
+      diagnosis.toLowerCase().includes(term) ||
+      chiefComplaint.toLowerCase().includes(term) ||
+      abhaId.includes(term);
     
-    const matchesFilter = outcomeFilter === 'All' || p.outcome.toLowerCase().includes(outcomeFilter.toLowerCase());
+    const outcome = p?.outcome || '';
+    const matchesFilter = outcomeFilter === 'All' || outcome.toLowerCase().includes(outcomeFilter.toLowerCase());
     return matchesSearch && matchesFilter;
-  });
+  }) : [];
 
   return (
     <DashboardLayout>
@@ -183,7 +191,7 @@ export default function AttendedPatientsPage() {
                       <td className="py-3 px-3">
                         <span className="font-black text-slate-900 dark:text-white font-mono block">{patient.token}</span>
                         <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Clock className="w-2.5 h-2.5" /> {patient.attendedAt.split(', ')[1]} ({patient.consultationDuration})
+                          <Clock className="w-2.5 h-2.5" /> {patient.attendedAt ? (patient.attendedAt.includes(',') ? patient.attendedAt.split(', ')[1] : patient.attendedAt) : 'Completed'} {patient.consultationDuration ? `(${patient.consultationDuration})` : ''}
                         </span>
                       </td>
                       <td className="py-3 px-3">

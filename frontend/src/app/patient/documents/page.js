@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { usePatientIntake } from '@/context/PatientIntakeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
 import { getTranslation } from '@/locales/i18n';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import Button from '@/components/ui/Button';
@@ -15,6 +16,7 @@ const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB limit
 
 export default function PatientDocumentsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const { intakeState, addDocument } = usePatientIntake();
   const { language } = useLanguage();
   const lang = language || intakeState?.language || 'hi';
@@ -79,7 +81,7 @@ export default function PatientDocumentsPage() {
 
         const formData = new FormData();
         formData.append('document', rawFile);
-        formData.append('patientId', intakeState?.patientId || 'P102');
+        formData.append('patientId', user?.patientId || intakeState?.patientId || user?.id || '');
         formData.append('type', fileType.toUpperCase().includes('PRESCRIPTION') ? 'PRESCRIPTION' : 'LAB_REPORT');
 
         const endpointsToTry = [

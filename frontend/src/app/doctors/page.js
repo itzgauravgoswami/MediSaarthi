@@ -8,9 +8,10 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Button from '@/components/ui/Button';
 import DoctorAvatar from '@/components/patient/DoctorAvatar';
-import { DOCTORS_DATA, SPECIALTY_CATEGORIES, searchDoctors } from '@/data/doctorsData';
+import { doctorApi, appointmentApi } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
+import { SPECIALTY_CATEGORIES, popularDiseases } from '@/constants/medicalSpecialties';
 import { 
   Search, 
   Stethoscope, 
@@ -35,6 +36,8 @@ export default function PublicDoctorsPage() {
   const isHindi = language === 'hi';
   const { isAuthenticated, user, login } = useAuth();
 
+  const [doctors, setDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [maxPrice, setMaxPrice] = useState(2000);
@@ -45,9 +48,32 @@ export default function PublicDoctorsPage() {
   const [selectedDate, setSelectedDate] = useState('Today');
   const [selectedSlot, setSelectedSlot] = useState('03:30 PM');
 
+  useEffect(() => {
+    async function loadDoctors() {
+      try {
+        setLoadingDoctors(true);
+        const data = await doctorApi.getDoctors();
+        setDoctors(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setDoctors([]);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    }
+    loadDoctors();
+  }, []);
+
   const filteredDoctors = useMemo(() => {
-    return searchDoctors(searchQuery, selectedCategory, maxPrice, sortBy);
-  }, [searchQuery, selectedCategory, maxPrice, sortBy]);
+    return doctors.filter(doc => {
+      const matchSearch = !searchQuery ||
+        (doc.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (doc.specialization || doc.department || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchCategory = selectedCategory === 'all' ||
+        (doc.specialization || doc.department || '').toLowerCase().includes(selectedCategory.toLowerCase());
+      const matchPrice = !doc.consultationFee || doc.consultationFee <= maxPrice;
+      return matchSearch && matchCategory && matchPrice;
+    });
+  }, [doctors, searchQuery, selectedCategory, maxPrice, sortBy]);
 
   const handleBook = (doc) => {
     if (!isAuthenticated || !user) {
@@ -61,8 +87,8 @@ export default function PublicDoctorsPage() {
   };
 
   const handleQuickLoginAsPatient = () => {
-    login('patient', { name: 'Rahul Kumar', email: 'rahul.kumar@gmail.com' });
     setShowAuthRequiredModal(false);
+    router.push('/login');
   };
 
   const handleConfirm = () => {
@@ -328,7 +354,7 @@ export default function PublicDoctorsPage() {
                   {isHindi ? 'उपचारित रोग:' : 'Key Conditions Treated:'}
                 </span>
                 <div className="flex flex-wrap gap-1.5 max-h-16 overflow-hidden">
-                  {doc.treatedDiseases.slice(0, 3).map((dis, i) => (
+                  {(doc.treatedDiseases || []).slice(0, 3).map((dis, i) => (
                     <button
                       key={i}
                       onClick={() => setSearchQuery(dis.split('(')[0].trim())}
@@ -338,9 +364,9 @@ export default function PublicDoctorsPage() {
                       {dis}
                     </button>
                   ))}
-                  {doc.treatedDiseases.length > 3 && (
+                  {(doc.treatedDiseases || []).length > 3 && (
                     <span className="px-1.5 py-0.5 text-[10px] text-slate-400 font-mono">
-                      +{doc.treatedDiseases.length - 3} more
+                      +{(doc.treatedDiseases || []).length - 3} more
                     </span>
                   )}
                 </div>
@@ -539,11 +565,13 @@ export default function PublicDoctorsPage() {
                 <div className="p-3 rounded-2xl bg-teal-50/50 dark:bg-[#0F4C5C]/20 border border-teal-200/50 dark:border-[#18A999]/30 flex items-center justify-between text-xs">
                   <div>
                     <span className="text-[10px] text-slate-400 uppercase font-mono block">Logged In Patient:</span>
-                    <strong className="text-slate-900 dark:text-white font-newsreader">{user?.name || 'Rahul Kumar'}</strong>
+                    <strong className="text-slate-900 dark:text-white font-newsreader">{user?.name || 'Patient'}</strong>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#18A999] text-white text-[10px] font-bold font-mono">
-                    TOKEN #102
-                  </span>
+                  {user?.token && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#18A999] text-white text-[10px] font-bold font-mono">
+                      TOKEN {user.token}
+                    </span>
+                  )}
                 </div>
 
                 {/* Date Selection */}

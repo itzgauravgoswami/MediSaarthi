@@ -1,13 +1,35 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { Card, Badge } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
-import { Hospital, Users, FileText, AlertTriangle, ShieldCheck, Activity, BarChart3, Clock } from 'lucide-react';
+import { Card } from '@/components/ui/Card';
+import { adminApi } from '@/services/api';
+import { Hospital, Users, FileText, ShieldCheck, Activity, BarChart3, Loader2, RefreshCw } from 'lucide-react';
 
 export default function AdminDashboardPage() {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  async function loadStats() {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApi.getStats();
+      setStats(data);
+    } catch (err) {
+      setError('Unable to load dashboard statistics. Please try again.');
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
   return (
     <DashboardLayout>
       <div className="space-y-4">
@@ -21,20 +43,46 @@ export default function AdminDashboardPage() {
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 text-[11px] font-bold flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-              All Systems Operational (100% Uptime)
+              MongoDB Connected
             </span>
+            <button
+              onClick={loadStats}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              title="Refresh stats"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        {/* Operational KPI Grid */}
+        {/* Error State */}
+        {error && (
+          <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm flex items-center justify-between">
+            <span>{error}</span>
+            <button
+              onClick={loadStats}
+              className="ml-4 px-3 py-1 rounded-lg bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-200 text-xs font-bold hover:bg-rose-200 transition-all"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Operational KPI Grid — Real MongoDB Counts */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Card className="p-3.5 flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950 text-[#18A999]">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Patients Intake</span>
-              <span className="text-xl font-black text-slate-900 dark:text-white">1,248</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Patients</span>
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
+              ) : (
+                <span className="text-xl font-black text-slate-900 dark:text-white">
+                  {stats?.totalPatients ?? 0}
+                </span>
+              )}
             </div>
           </Card>
 
@@ -43,8 +91,14 @@ export default function AdminDashboardPage() {
               <Hospital className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Active Kiosks</span>
-              <span className="text-xl font-black text-slate-900 dark:text-white">4 Fleet</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Registered Kiosks</span>
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
+              ) : (
+                <span className="text-xl font-black text-slate-900 dark:text-white">
+                  {stats?.totalKiosks ?? 0}
+                </span>
+              )}
             </div>
           </Card>
 
@@ -53,8 +107,14 @@ export default function AdminDashboardPage() {
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">OCR Documents Parsed</span>
-              <span className="text-xl font-black text-slate-900 dark:text-white">3,890</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Documents Uploaded</span>
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
+              ) : (
+                <span className="text-xl font-black text-slate-900 dark:text-white">
+                  {stats?.totalDocuments ?? 0}
+                </span>
+              )}
             </div>
           </Card>
 
@@ -63,42 +123,26 @@ export default function AdminDashboardPage() {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Doctor Verification Rate</span>
-              <span className="text-xl font-black text-slate-900 dark:text-white">98.4%</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Verification Rate</span>
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
+              ) : (
+                <span className="text-xl font-black text-slate-900 dark:text-white">
+                  {stats?.verificationRate ?? '—'}
+                </span>
+              )}
             </div>
           </Card>
         </div>
 
-        {/* Impact Summary Banner */}
-        <Card className="p-4 bg-gradient-to-r from-slate-900 via-slate-800 to-[#0D9488] text-white space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-700/60 pb-2.5">
-            <h3 className="font-extrabold text-sm flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#18A999]" />
-              MediSaarthi Clinical Impact Index
-            </h3>
-            <span className="text-[11px] text-slate-300 font-medium">Prototype / Sandbox Benchmarks</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1 text-center">
-            <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10">
-              <span className="text-[11px] text-slate-300 block">Traditional Intake Time</span>
-              <span className="text-lg font-bold text-rose-300 mt-0.5 block">8–12 mins</span>
-              <span className="text-[10px] text-slate-400">Manual history taking per patient</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10">
-              <span className="text-[11px] text-slate-300 block">MediSaarthi AI Intake</span>
-              <span className="text-lg font-bold text-emerald-300 mt-0.5 block">3.4 mins</span>
-              <span className="text-[10px] text-slate-400">Multilingual voice & touch structured</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10">
-              <span className="text-[11px] text-slate-300 block">Doctor Consultation Efficiency</span>
-              <span className="text-lg font-bold text-teal-300 mt-0.5 block">+ 40% Capacity</span>
-              <span className="text-[10px] text-slate-400">Pre-compiled clinical summaries</span>
-            </div>
-          </div>
-        </Card>
+        {/* Empty State */}
+        {!loading && !error && stats?.totalPatients === 0 && (
+          <Card className="p-8 text-center text-slate-500 space-y-2">
+            <Activity className="w-8 h-8 mx-auto text-slate-300" />
+            <p className="font-semibold">No data yet</p>
+            <p className="text-xs text-slate-400">Patient intake, documents, and kiosk data will appear here once records are created.</p>
+          </Card>
+        )}
 
         {/* Quick Links */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -120,7 +164,9 @@ export default function AdminDashboardPage() {
                 <Hospital className="w-5 h-5 text-blue-500" />
                 <div>
                   <h4 className="font-bold text-xs text-slate-900 dark:text-white">Kiosk Fleet</h4>
-                  <span className="text-[11px] text-slate-400">4 Hardware terminals online</span>
+                  <span className="text-[11px] text-slate-400">
+                    {stats?.totalKiosks > 0 ? `${stats.totalKiosks} terminal(s) registered` : 'No kiosks registered yet'}
+                  </span>
                 </div>
               </div>
             </Card>

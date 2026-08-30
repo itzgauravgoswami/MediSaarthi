@@ -10,56 +10,82 @@ const User = require('../src/models/User');
 const Patient = require('../src/models/Patient');
 const Doctor = require('../src/models/Doctor');
 const ClinicalHistory = require('../src/models/ClinicalHistory');
-const Interview = require('../src/models/Interview');
-const Document = require('../src/models/Document');
-const Medication = require('../src/models/Medication');
-const Investigation = require('../src/models/Investigation');
-const Appointment = require('../src/models/Appointment');
-const Consent = require('../src/models/Consent');
 const RedFlagAlert = require('../src/models/RedFlagAlert');
-const TimelineEvent = require('../src/models/TimelineEvent');
-const AyushAssessment = require('../src/models/AyushAssessment');
 const Kiosk = require('../src/models/Kiosk');
-const AuditLog = require('../src/models/AuditLog');
 
 async function seedDatabase() {
   logger.info('[MediSaarthi Seed] Starting database population...');
 
   try {
     await connectDB();
-  } catch (e) {}
+  } catch (e) {
+    logger.warn(`[Seed] DB connection error: ${e.message}`);
+  }
 
   const defaultPassword = await hashPassword('Doctor@123');
   const patientPassword = await hashPassword('Patient@123');
   const adminPassword = await hashPassword('Admin@123');
 
-  // 1. Doctors
+  // 1. Doctors across key clinical specialties
   const doctors = [
     {
       doctorId: 'DOC-101',
       userId: 'USR-DOC-1',
       name: 'Dr. R. K. Sharma',
       specialization: 'Internal Medicine',
-      department: 'General OPD',
+      department: 'General Medicine OPD',
       registrationNumber: 'DMC-48291',
       roomNumber: 'OPD-102',
       isAvailable: true,
-      queueCount: 4
+      queueCount: 2
     },
     {
       doctorId: 'DOC-102',
       userId: 'USR-DOC-2',
       name: 'Dr. Ananya Iyer',
       specialization: 'Cardiology',
-      department: 'Cardiology Wing',
+      department: 'Cardiology & Cardiac Triage',
       registrationNumber: 'DMC-59302',
       roomNumber: 'CARDIO-204',
       isAvailable: true,
-      queueCount: 2
+      queueCount: 1
     },
     {
       doctorId: 'DOC-103',
       userId: 'USR-DOC-3',
+      name: 'Dr. Vikramaditya Rao',
+      specialization: 'Emergency Medicine',
+      department: 'Emergency & Trauma Care',
+      registrationNumber: 'DMC-61029',
+      roomNumber: 'EMERG-01',
+      isAvailable: true,
+      queueCount: 0
+    },
+    {
+      doctorId: 'DOC-104',
+      userId: 'USR-DOC-4',
+      name: 'Dr. Sunita Deshmukh',
+      specialization: 'Neurology',
+      department: 'Neurosciences & Stroke Unit',
+      registrationNumber: 'DMC-73821',
+      roomNumber: 'NEURO-301',
+      isAvailable: true,
+      queueCount: 1
+    },
+    {
+      doctorId: 'DOC-105',
+      userId: 'USR-DOC-5',
+      name: 'Dr. Arjun Mehta',
+      specialization: 'Pulmonology',
+      department: 'Respiratory Medicine',
+      registrationNumber: 'DMC-81920',
+      roomNumber: 'PULMO-108',
+      isAvailable: true,
+      queueCount: 1
+    },
+    {
+      doctorId: 'DOC-106',
+      userId: 'USR-DOC-6',
       name: 'Vaidya Rajesh Verma',
       specialization: 'Ayurvedic Medicine',
       department: 'AYUSH OPD Pavilion',
@@ -70,7 +96,7 @@ async function seedDatabase() {
     }
   ];
 
-  // 2. Patients
+  // 2. Initial Patients
   const patients = [
     {
       patientId: 'P102',
@@ -83,7 +109,7 @@ async function seedDatabase() {
       preferredLanguage: 'hi-IN',
       abhaId: '91-4829-1039-4821',
       priority: 'High',
-      status: 'Triage Review',
+      status: 'Waiting',
       intakeStatus: 'Completed',
       assignedDoctor: 'Dr. R. K. Sharma',
       consultationTime: '10:30 AM',
@@ -130,42 +156,31 @@ async function seedDatabase() {
       phone: '+91 98321 65498',
       preferredLanguage: 'hi-IN',
       priority: 'High',
-      status: 'Triage Review',
+      status: 'Waiting',
       intakeStatus: 'Completed',
       assignedDoctor: 'Dr. Ananya Iyer',
       consultationTime: '11:15 AM'
     }
   ];
 
-  // 3. Red Flags
-  const redFlags = [
+  // 3. Initial Clinical History
+  const histories = [
     {
-      alertId: 'RF-1',
       patientId: 'P102',
-      patientName: 'Rahul Kumar',
-      token: '#102',
-      age: 45,
-      gender: 'Male',
-      ruleId: 'RF_CHEST_001',
-      ruleName: 'Acute Coronary Syndrome Risk (Chest Pain with Dyspnea)',
-      symptoms: ['chest_pain', 'breathlessness', 'arm_radiation'],
-      description: 'Substernal chest pain with exertional breathlessness & left arm radiation.',
-      priority: 'IMMEDIATE',
-      status: 'OPEN'
-    },
-    {
-      alertId: 'RF-2',
-      patientId: 'P105',
-      patientName: 'Sunita Devi',
-      token: '#105',
-      age: 62,
-      gender: 'Female',
-      ruleId: 'RF_HYPERTENSION_006',
-      ruleName: 'Hypertensive Urgency with Neurological Symptoms',
-      symptoms: ['severe_headache', 'dizziness', 'blurred_vision'],
-      description: 'Sudden onset severe dizziness with blood pressure 180/110 mmHg.',
-      priority: 'HIGH',
-      status: 'OPEN'
+      historyOfPresentIllness: {
+        chiefComplaint: ['Substernal chest pain', 'Dyspnea on exertion'],
+        onset: '3 days ago',
+        duration: '3 days',
+        severity: 7,
+        location: 'Substernal Precordial',
+        summaryNarrative: 'Patient reports substernal chest discomfort increasing on moderate exertion, accompanied by mild breathlessness.'
+      },
+      pastMedicalHistory: ['Essential Hypertension', 'Type 2 Diabetes Mellitus'],
+      medications: [
+        { name: 'Metformin', dosage: '500 mg', frequency: 'BD', source: 'OCR' },
+        { name: 'Amlodipine', dosage: '5 mg', frequency: 'OD', source: 'OCR' }
+      ],
+      allergies: [{ allergen: 'Penicillin', reaction: 'Skin rash', severity: 'Mild' }]
     }
   ];
 
@@ -173,19 +188,30 @@ async function seedDatabase() {
   const kiosks = [
     { kioskId: 'KIOSK-01', name: 'Kiosk 1', location: 'Main OPD Reception Desk A', status: 'ONLINE', softwareVersion: 'v2026.4.1' },
     { kioskId: 'KIOSK-02', name: 'Kiosk 2', location: 'Cardiology Wing Waiting Area', status: 'ONLINE', softwareVersion: 'v2026.4.1' },
-    { kioskId: 'KIOSK-03', name: 'Kiosk 3', location: 'Emergency Triage Portal', status: 'ACTIVE_SESSION', softwareVersion: 'v2026.4.1' },
-    { kioskId: 'KIOSK-04', name: 'Kiosk 4', location: 'AYUSH OPD Pavilion', status: 'MAINTENANCE', softwareVersion: 'v2026.3.9' }
+    { kioskId: 'KIOSK-03', name: 'Kiosk 3', location: 'Emergency Triage Portal', status: 'ONLINE', softwareVersion: 'v2026.4.1' },
+    { kioskId: 'KIOSK-04', name: 'Kiosk 4', location: 'AYUSH OPD Pavilion', status: 'ONLINE', softwareVersion: 'v2026.4.1' }
   ];
 
   try {
-    // Upsert or log
-    logger.info(`[Seed] Seeded ${doctors.length} doctors, ${patients.length} patients, ${redFlags.length} red flag alerts, and ${kiosks.length} kiosk devices.`);
+    for (const doc of doctors) {
+      await Doctor.findOneAndUpdate({ doctorId: doc.doctorId }, doc, { upsert: true, new: true });
+    }
+    for (const pat of patients) {
+      await Patient.findOneAndUpdate({ patientId: pat.patientId }, pat, { upsert: true, new: true });
+    }
+    for (const hist of histories) {
+      await ClinicalHistory.findOneAndUpdate({ patientId: hist.patientId }, hist, { upsert: true, new: true });
+    }
+    for (const ksk of kiosks) {
+      await Kiosk.findOneAndUpdate({ kioskId: ksk.kioskId }, ksk, { upsert: true, new: true });
+    }
+    logger.info(`[Seed] Successfully seeded ${doctors.length} doctors, ${patients.length} patients, and ${kiosks.length} kiosks.`);
   } catch (e) {
-    logger.error(`[Seed] Seed error: ${e.message}`);
+    logger.error(`[Seed] Seed database error: ${e.message}`);
   }
 
   logger.info('[MediSaarthi Seed] Seeding completed successfully!');
-  if (process.argv[1].includes('seed.js')) {
+  if (process.argv[1] && process.argv[1].includes('seed.js')) {
     process.exit(0);
   }
 }

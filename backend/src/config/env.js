@@ -72,6 +72,13 @@ const config = {
       : 'http://localhost:5000/api/v1/fhir')
   },
 
+  emergency: {
+    enabled: process.env.EMERGENCY_ALERT_ENABLED !== 'false',
+    confidenceThreshold: parseFloat(process.env.EMERGENCY_CONFIDENCE_THRESHOLD) || 0.80,
+    ackTimeoutSeconds: parseInt(process.env.EMERGENCY_ACK_TIMEOUT_SECONDS, 10) || 60,
+    realtimeSseEnabled: process.env.REALTIME_SSE_ENABLED !== 'false'
+  },
+
   keepAlive: {
     enabled: process.env.KEEP_ALIVE_ENABLED !== 'false',
     url: process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL || process.env.KEEP_ALIVE_URL || '',

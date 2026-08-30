@@ -25,8 +25,8 @@ export default function PatientReviewPage() {
   const medsCount = intakeState?.extractedData?.medications?.length || 0;
   const isRedFlag = intakeState?.clinicalPriority === 'RED_FLAG' || intakeState?.chiefComplaint?.toLowerCase().includes('chest');
 
-  const defaultComplaint = isHindi ? 'सीने में दर्द और सांस लेने में तकलीफ' : 'Chest Pain with Breathlessness';
-  const displayComplaint = intakeState?.chiefComplaint || defaultComplaint;
+  const displayComplaint = intakeState?.chiefComplaint || (isHindi ? 'विवरण नहीं दिया गया' : 'None reported');
+  const displayDuration = intakeState?.duration || (isHindi ? 'उल्लेख नहीं' : 'Not specified');
 
   return (
     <DashboardLayout>
@@ -61,7 +61,7 @@ export default function PatientReviewPage() {
               {getTranslation(lang, 'symptomDurationLabel')}
             </span>
             <span className="text-sm font-bold text-slate-900 dark:text-white">
-              {getTranslation(lang, 'durationApprox3Days')}
+              {displayDuration}
             </span>
           </div>
 
@@ -74,7 +74,7 @@ export default function PatientReviewPage() {
               <FileText className="w-4 h-4 text-[#18A999]" />
               {docsCount > 0 
                 ? (isHindi ? `${docsCount} दस्तावेज़ संलग्न` : `${docsCount} Documents Attached`) 
-                : (isHindi ? '2 दस्तावेज़' : '2 Documents')}
+                : (isHindi ? 'कोई दस्तावेज़ नहीं' : '0 Documents')}
             </span>
           </div>
 
@@ -87,7 +87,7 @@ export default function PatientReviewPage() {
               <Pill className="w-4 h-4 text-emerald-500" />
               {medsCount > 0 
                 ? (isHindi ? `${medsCount} सक्रिय दवाइयाँ` : `${medsCount} Active Items`) 
-                : (isHindi ? '3 सक्रिय दवाइयाँ' : '3 Active Items')}
+                : (isHindi ? 'कोई नहीं' : '0 Active Items')}
             </span>
           </div>
 

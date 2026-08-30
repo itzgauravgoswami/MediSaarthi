@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { DOCTORS_DATA, SPECIALTY_CATEGORIES, searchDoctors } from '@/data/doctorsData';
+import { doctorApi, appointmentApi } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DoctorAvatar from '@/components/patient/DoctorAvatar';
 import Button from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
+import { SPECIALTY_CATEGORIES, popularDiseases } from '@/constants/medicalSpecialties';
 import { 
   Search, 
   Stethoscope, 
@@ -36,6 +37,8 @@ export default function PatientDoctorsPage() {
   const isHindi = language === 'hi';
   const { isAuthenticated, user, login } = useAuth();
 
+  const [doctors, setDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [maxPrice, setMaxPrice] = useState(2000);
@@ -46,10 +49,34 @@ export default function PatientDoctorsPage() {
   const [selectedDate, setSelectedDate] = useState('Today');
   const [selectedSlot, setSelectedSlot] = useState('02:30 PM');
 
-  // Filtered doctors list
+  // Load doctors from API
+  useEffect(() => {
+    async function loadDoctors() {
+      try {
+        setLoadingDoctors(true);
+        const data = await doctorApi.getDoctors();
+        setDoctors(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setDoctors([]);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    }
+    loadDoctors();
+  }, []);
+
+  // Client-side filtering on API data
   const filteredDoctors = useMemo(() => {
-    return searchDoctors(searchQuery, selectedCategory, maxPrice, sortBy);
-  }, [searchQuery, selectedCategory, maxPrice, sortBy]);
+    return doctors.filter(doc => {
+      const matchSearch = !searchQuery ||
+        (doc.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (doc.specialization || doc.department || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchCategory = selectedCategory === 'all' ||
+        (doc.specialization || doc.department || '').toLowerCase().includes(selectedCategory.toLowerCase());
+      const matchPrice = !doc.consultationFee || doc.consultationFee <= maxPrice;
+      return matchSearch && matchCategory && matchPrice;
+    });
+  }, [doctors, searchQuery, selectedCategory, maxPrice, sortBy]);
 
   const handleBookDoctor = (doc) => {
     if (!isAuthenticated || !user) {
@@ -63,20 +90,35 @@ export default function PatientDoctorsPage() {
   };
 
   const handleQuickLoginAsPatient = () => {
-    login('patient', { name: 'Rahul Kumar', email: 'rahul.kumar@gmail.com' });
     setShowAuthModal(false);
+    // Redirect to login page instead of fake quick-login
+    router.push('/login');
   };
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     if (!isAuthenticated || !user) {
       setShowAuthModal(true);
       return;
     }
-    setBookingSuccess(true);
-    setTimeout(() => {
-      setSelectedDoctorForBooking(null);
-      setBookingSuccess(false);
-    }, 2400);
+    try {
+      await appointmentApi.createAppointment({
+        patientId: user.patientId || user.id,
+        patientName: user.name,
+        doctorId: selectedDoctorForBooking?.doctorId,
+        doctorName: selectedDoctorForBooking?.name,
+        specialization: selectedDoctorForBooking?.specialization || selectedDoctorForBooking?.department,
+        slotTime: selectedSlot,
+        appointmentDate: selectedDate === 'Today' ? new Date() : new Date(selectedDate),
+        chiefComplaint: 'OPD Consultation'
+      });
+      setBookingSuccess(true);
+      setTimeout(() => {
+        setSelectedDoctorForBooking(null);
+        setBookingSuccess(false);
+      }, 2400);
+    } catch (e) {
+      // Error handled by API service
+    }
   };
 
   // Popular Disease Tags for 1-Click Search
@@ -122,7 +164,7 @@ export default function PatientDoctorsPage() {
           <div className="flex items-center gap-2.5 shrink-0">
             <div className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#27272a] text-xs">
               <span className="text-[10px] text-slate-400 block font-mono">ACTIVE TOKEN</span>
-              <span className="font-extrabold text-[#18A999] font-mono">TOKEN #102</span>
+              <span className="font-extrabold text-[#18A999] font-mono">TOKEN {user?.token || '#101'}</span>
             </div>
             <Link href="/patient/interview">
               <Button size="sm" variant="primary" icon={Sparkles}>
@@ -300,7 +342,7 @@ export default function PatientDoctorsPage() {
 
               {/* Key Disease Tags */}
               <div className="flex flex-wrap gap-1">
-                {doc.treatedDiseases.slice(0, 3).map((dis, i) => (
+                {(doc.treatedDiseases || []).slice(0, 3).map((dis, i) => (
                   <button
                     key={i}
                     onClick={() => setSearchQuery(dis.split('(')[0].trim())}
@@ -310,9 +352,9 @@ export default function PatientDoctorsPage() {
                     {dis}
                   </button>
                 ))}
-                {doc.treatedDiseases.length > 3 && (
+                {(doc.treatedDiseases || []).length > 3 && (
                   <span className="px-1 text-[9px] text-slate-400 self-center font-mono">
-                    +{doc.treatedDiseases.length - 3}
+                    +{(doc.treatedDiseases || []).length - 3}
                   </span>
                 )}
               </div>
@@ -324,7 +366,7 @@ export default function PatientDoctorsPage() {
                     {isHindi ? 'परामर्श शुल्क' : 'OPD Fee'}
                   </span>
                   <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 font-mono leading-none">
-                    ₹{doc.priceINR}
+                    ₹{doc.priceINR || doc.consultationFee || 500}
                   </span>
                 </div>
 
@@ -452,8 +494,8 @@ export default function PatientDoctorsPage() {
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-300">
                   {isHindi 
-                    ? `आपका टोकन #102 डॉ. ${selectedDoctorForBooking.name} के साथ ${selectedDate} को ${selectedSlot} बजे के लिए पंजीकृत हो गया है।`
-                    : `Your Token #102 has been registered with ${selectedDoctorForBooking.name} for ${selectedDate} at ${selectedSlot}.`}
+                    ? `आपका टोकन ${user?.token || '#101'} डॉ. ${selectedDoctorForBooking.name} के साथ ${selectedDate} को ${selectedSlot} बजे के लिए पंजीकृत हो गया है।`
+                    : `Your Token ${user?.token || '#101'} has been registered with ${selectedDoctorForBooking.name} for ${selectedDate} at ${selectedSlot}.`}
                 </p>
                 <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-emerald-800 dark:text-emerald-300 font-mono">
                   {isHindi ? 'परामर्श शुल्क: ' : 'Confirmed Fee: '} ₹{selectedDoctorForBooking.priceINR} (Pay at Hospital Desk / UPI)
@@ -536,7 +578,7 @@ export default function PatientDoctorsPage() {
                     </span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold">
-                    {isHindi ? 'टोकन #102 से लिंक' : 'Linked to Token #102'}
+                    {isHindi ? `टोकन ${user?.token || '#101'} से लिंक` : `Linked to Token ${user?.token || '#101'}`}
                   </span>
                 </div>
 

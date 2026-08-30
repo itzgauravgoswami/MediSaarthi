@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import { Settings, ShieldCheck, Database, Key, Check } from 'lucide-react';
 
 export default function SettingsPage() {
-  const [sandboxMode, setSandboxMode] = useState(true);
+  const [sandboxMode, setSandboxMode] = useState(false);
   const [geminiKey, setGeminiKey] = useState('••••••••••••••••••••••••••••••••');
   const [saved, setSaved] = useState(false);
 

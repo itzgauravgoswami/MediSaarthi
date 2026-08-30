@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import Button from '@/components/ui/Button';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { usePatientIntake } from '@/context/PatientIntakeContext';
+import { appointmentApi } from '@/services/api';
 import { 
   FileText, 
   Pill, 
@@ -24,7 +25,16 @@ import {
   Image as ImageIcon,
   CheckCircle2,
   FileSpreadsheet,
-  Share2
+  Share2,
+  Stethoscope,
+  Activity,
+  MapPin,
+  UserCheck,
+  CreditCard,
+  Receipt,
+  Smartphone,
+  Sparkles,
+  Wallet
 } from 'lucide-react';
 
 export default function PatientReportsPage() {
@@ -33,179 +43,91 @@ export default function PatientReportsPage() {
   const { user } = useAuth();
   const { intakeState } = usePatientIntake();
 
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'prescriptions' | 'reports' | 'previous'
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'bookings' | 'prescriptions' | 'reports' | 'previous'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRecordForPreview, setSelectedRecordForPreview] = useState(null);
+  const [registeredBookings, setRegisteredBookings] = useState([]);
+  const [selectedBookingForPay, setSelectedBookingForPay] = useState(null);
+  const [paidBookings, setPaidBookings] = useState({});
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
-  // Doctor e-Prescriptions
-  const prescriptions = [
-    {
-      id: 'RX-2026-8819',
-      doctorName: 'Dr. Arvind Mehta',
-      doctorQualification: 'MBBS, MD (Med), DM (Cardiology), FACC',
-      hospital: 'Max Super Speciality Hospital, New Delhi',
-      date: '28 Aug 2026',
-      department: 'Cardiology OPD Desk A',
-      diagnosis: 'Grade II Essential Hypertension & Exertional Angina',
-      diagnosisHindi: 'ग्रेड II उच्च रक्तचाप एवं परिश्रम जनित सीने का दर्द',
-      mciRegNo: 'MCI-74829/DL',
-      qrCodeData: 'MEDISAARTHI-RX-VERIFIED-8819',
-      medications: [
-        { name: 'Tab. Telmisartan', dosage: '40 mg', frequency: '1-0-0 (Morning)', duration: '30 Days', instructions: 'Take after breakfast with water' },
-        { name: 'Tab. Atorvastatin', dosage: '20 mg', frequency: '0-0-1 (Night)', duration: '30 Days', instructions: 'Take at bedtime for lipid control' },
-        { name: 'Tab. Sorbitrate', dosage: '5 mg', frequency: 'SOS (As needed)', duration: '15 Days', instructions: 'Sublingual (under the tongue) during acute chest heaviness' }
-      ],
-      dietaryAdvice: 'Low-sodium cardiac diet (<2g salt/day), restrict fried foods, 30 min light walking daily.',
-      dietaryAdviceHindi: 'कम नमक वाला हृदय आहार (<2 ग्राम नमक/दिन), तला हुआ खाना न खाएं, प्रतिदिन 30 मिनट टहलें।'
-    },
-    {
-      id: 'RX-2026-6421',
-      doctorName: 'Dr. Sameer Malhotra',
-      doctorQualification: 'MBBS, MD (Psychiatry - AIIMS)',
-      hospital: 'Max Super Speciality Hospital, New Delhi',
-      date: '14 Aug 2026',
-      department: 'Behavioral Sciences & Neuro-Psychiatry',
-      diagnosis: 'Generalized Anxiety Disorder (GAD) & Insomnia',
-      diagnosisHindi: 'सामान्यीकृत चिंता विकार एवं अनिद्रा',
-      mciRegNo: 'MCI-52910/DL',
-      qrCodeData: 'MEDISAARTHI-RX-VERIFIED-6421',
-      medications: [
-        { name: 'Tab. Escitalopram', dosage: '10 mg', frequency: '1-0-0 (Morning)', duration: '20 Days', instructions: 'Take after breakfast' },
-        { name: 'Tab. Clonazepam', dosage: '0.25 mg', frequency: '0-0-1 (Bedtime)', duration: '7 Days', instructions: 'Only if unable to sleep' }
-      ],
-      dietaryAdvice: 'Avoid caffeine/tea after 6 PM, practice 15 min mindfulness breathing exercises before sleep.',
-      dietaryAdviceHindi: 'शाम 6 बजे के बाद चाय/कॉफ़ी न लें, सोने से पहले 15 मिनट गहरी सांस लेने का अभ्यास करें।'
-    }
-  ];
+  useEffect(() => {
+    async function loadBookings() {
+      const patientId = user?.patientId || user?.id;
+      if (!patientId) {
+        setRegisteredBookings([]);
+        return;
+      }
+      try {
+        if (typeof appointmentApi?.getPatientAppointments === 'function') {
+          const appts = await appointmentApi.getPatientAppointments(patientId);
+          setRegisteredBookings(appts || []);
+        }
+      } catch (e) {}
 
-  // Uploaded Diagnostic & Lab Reports
-  const diagnosticReports = [
-    {
-      id: 'REP-LAB-1092',
-      title: 'Comprehensive Lipid Profile & Blood Chemistry',
-      titleHindi: 'लिपिड प्रोफाइल एवं रक्त परीक्षण रिपोर्ट',
-      date: '27 Aug 2026',
-      lab: 'Max Healthcare Central Laboratories',
-      type: 'Blood Pathology',
-      fileSize: '1.8 MB',
-      ocrConfidence: '98% OCR Match',
-      status: 'Attention Required',
-      statusColor: 'amber',
-      keyFindings: [
-        { marker: 'Total Cholesterol', value: '238 mg/dL', normal: '< 200 mg/dL', flag: 'High' },
-        { marker: 'LDL (Bad Cholesterol)', value: '154 mg/dL', normal: '< 100 mg/dL', flag: 'High' },
-        { marker: 'HDL (Good Cholesterol)', value: '44 mg/dL', normal: '> 40 mg/dL', flag: 'Normal' },
-        { marker: 'Serum Creatinine', value: '0.92 mg/dL', normal: '0.7 - 1.2 mg/dL', flag: 'Normal' },
-        { marker: 'HbA1c (Sugar)', value: '6.4%', normal: '< 5.7%', flag: 'Pre-diabetic' }
-      ],
-      summary: 'Elevated serum cholesterol and LDL detected. Clinical lipid management initiated by cardiologist.'
-    },
-    {
-      id: 'REP-ECG-4810',
-      title: '12-Lead Electrocardiogram (ECG Tracing)',
-      titleHindi: '12-लीड ईसीजी (हृदय गति) रिपोर्ट',
-      date: '28 Aug 2026',
-      lab: 'Max Super Speciality Cardiology Lab',
-      type: 'Cardiac Diagnostics',
-      fileSize: '2.4 MB',
-      ocrConfidence: '96% AI Validated',
-      status: 'Doctor Reviewed',
-      statusColor: 'emerald',
-      keyFindings: [
-        { marker: 'Heart Rate', value: '82 bpm', normal: '60 - 100 bpm', flag: 'Normal' },
-        { marker: 'Rhythm', value: 'Normal Sinus Rhythm', normal: 'Sinus', flag: 'Normal' },
-        { marker: 'ST Segment', value: 'Non-specific T-wave flattening in V4-V6', normal: 'Isoelectric', flag: 'Mild Ischemia' }
-      ],
-      summary: 'Normal sinus rhythm with subtle inferolateral repolarization changes under exertional stress.'
-    },
-    {
-      id: 'REP-HEM-3019',
-      title: 'Complete Blood Count (CBC) & ESR Panel',
-      titleHindi: 'कम्पलीट ब्लड काउंट (सीबीसी) एवं ईएसआर',
-      date: '10 Aug 2026',
-      lab: 'Max Healthcare Central Laboratories',
-      type: 'Hematology',
-      fileSize: '1.2 MB',
-      ocrConfidence: '99% Verified',
-      status: 'Normal',
-      statusColor: 'emerald',
-      keyFindings: [
-        { marker: 'Hemoglobin (Hb)', value: '14.6 g/dL', normal: '13.5 - 17.5 g/dL', flag: 'Normal' },
-        { marker: 'Total Leukocyte Count (TLC)', value: '7,400 /mcL', normal: '4,000 - 11,000', flag: 'Normal' },
-        { marker: 'Platelet Count', value: '2.65 Lakhs', normal: '1.5 - 4.5 Lakhs', flag: 'Normal' },
-        { marker: 'ESR (1st Hour)', value: '12 mm/hr', normal: '< 15 mm/hr', flag: 'Normal' }
-      ],
-      summary: 'All hematological parameters within healthy biological reference intervals.'
+      try {
+        const storedPaid = localStorage.getItem('medisaarthi_paid_bookings');
+        if (storedPaid) {
+          setPaidBookings(JSON.parse(storedPaid));
+        }
+      } catch (e) {}
     }
-  ];
+    loadBookings();
+  }, [user]);
 
-  // Previous Documents Uploaded by User
-  const previousUploadedDocuments = [
-    {
-      id: 'DOC-PREV-001',
-      title: 'Inpatient Hospital Discharge Summary (2025)',
-      titleHindi: 'अस्पताल डिस्चार्ज सारांश (2025)',
-      category: 'Discharge Summary',
-      categoryHindi: 'डिस्चार्ज समरी',
+  const handlePayConsultation = (bk) => {
+    setPaymentSuccess(true);
+    const invoiceId = `INV-2026-${bk.appointmentId || 'OPD-102'}`;
+    const newInvoice = {
+      id: invoiceId,
+      appointmentId: bk.appointmentId || 'APT-102',
+      title: `Doctor OPD Consultation - ${bk.doctorName}`,
+      titleHindi: `डॉक्टर ओपीडी परामर्श - ${bk.doctorName}`,
+      doctor: `${bk.doctorName} (${bk.specialization || bk.department || 'Specialist'})`,
       hospital: 'Max Super Speciality Hospital, New Delhi',
-      date: '12 May 2025',
-      fileType: 'PDF Document',
-      fileSize: '3.1 MB',
-      ocrConfidence: '99% OCR Verified',
-      status: 'Archived Record',
-      statusColor: 'teal',
-      summary: 'Admitted for acute exertional chest tightness. Coronary angiography revealed non-obstructive CAD. Stabilized on medical therapy and discharged in stable condition.',
-      summaryHindi: 'सीने में जकड़न के लिए भर्ती। कोरोनरी एंजियोग्राफी में मामूली बदलाव। दवाओं द्वारा स्थिर कर डिस्चार्ज किया गया।'
-    },
-    {
-      id: 'DOC-PREV-002',
-      title: 'Past OPD Prescription Slip & Medication History',
-      titleHindi: 'पिछला ओपीडी पर्चा एवं दवा इतिहास',
-      category: 'Handwritten Prescription',
-      categoryHindi: 'हस्तलिखित पर्चा',
-      hospital: 'Max Super Speciality Hospital, New Delhi',
-      date: '15 Jan 2026',
-      fileType: 'Image Scan (JPG)',
-      fileSize: '1.5 MB',
-      ocrConfidence: '95% Handwriting OCR',
-      status: 'Digitized by Kiosk',
-      statusColor: 'emerald',
-      summary: 'Prescribed Tab. Telmisartan 40mg (OD), Tab. Pantoprazole 40mg (OD fasting). Advice: Routine BP self-monitoring twice a week.',
-      summaryHindi: 'दवाएं: टेल्मिसार्टन 40 मिलीग्राम (प्रतिदिन), पेंटोप्राजोल 40 मिलीग्राम। सप्ताह में 2 बार बीपी जांचने की सलाह।'
-    },
-    {
-      id: 'DOC-PREV-003',
-      title: 'Digital Chest X-Ray (PA View Radiograph)',
-      titleHindi: 'छाती का एक्स-रे डिजिटल रिपोर्ट',
-      category: 'Radiology Imaging',
-      categoryHindi: 'रेडियोलॉजी रिपोर्ट',
-      hospital: 'Max Super Speciality Imaging Center',
-      date: '20 Nov 2025',
-      fileType: 'Radiology Scan (PDF)',
-      fileSize: '4.2 MB',
-      ocrConfidence: 'Radiologist Signed',
-      status: 'Verified Scan',
-      statusColor: 'emerald',
-      summary: 'Normal cardiothoracic ratio (CTR < 50%). Bronchovascular markings normal. Both costophrenic angles clear. No focal consolidation or effusion.',
-      summaryHindi: 'हृदय का आकार सामान्य (<50%)। फेफड़े पूरी तरह से साफ। कोई संक्रमण या द्रव नहीं।'
-    },
-    {
-      id: 'DOC-PREV-004',
-      title: 'Ayushman Bharat Digital Health Card (ABHA)',
-      titleHindi: 'आयुष्मान भारत डिजिटल हेल्थ आईडी (ABHA)',
-      category: 'ABDM Health Identity',
-      categoryHindi: 'एबीएचए पहचान पत्र',
-      hospital: 'National Health Authority (NHA)',
-      date: '01 Jan 2026',
-      fileType: 'Digital Identity Card',
-      fileSize: '850 KB',
-      ocrConfidence: 'Aadhaar Verified',
-      status: 'Active Identity',
-      statusColor: 'teal',
-      summary: 'ABHA ID: 91-4829-1039-4821. Linked with National Health Stack. Consents active for emergency data sharing across Max Super Speciality Network.',
-      summaryHindi: 'एबीएचए आईडी: 91-4829-1039-4821 आधार से प्रमाणित। मैक्स नेटवर्क पर आपातकालीन डेटा साझाकरण सक्रिय।'
-    }
-  ];
+      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      category: 'OPD Consultation',
+      categoryHindi: 'ओपीडी परामर्श',
+      amount: 500,
+      status: 'Paid',
+      statusHindi: 'सफलतापूर्वक भुगतान किया',
+      paymentMethod: 'Google Pay (UPI Ref: UPI-' + Date.now() + ')',
+      paidAt: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+      dueDate: 'Paid Online',
+      breakdown: [
+        { item: 'Specialist Doctor OPD Consultation Fee', amount: 500 },
+        { item: 'AI Multilingual Voice Intake & EMR Triaging', amount: 0, note: 'Free / Included' },
+        { item: 'Hospital Token Registration & Queue Pass', amount: 0, note: 'Waived' }
+      ]
+    };
+
+    setTimeout(() => {
+      setPaidBookings(prev => {
+        const updated = { ...prev, [bk.appointmentId || bk.id]: true };
+        try {
+          localStorage.setItem('medisaarthi_paid_bookings', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
+
+      try {
+        const stored = localStorage.getItem('medisaarthi_invoices');
+        const existingInvoices = stored ? JSON.parse(stored) : [];
+        const filtered = existingInvoices.filter(inv => inv.id !== invoiceId && inv.appointmentId !== bk.appointmentId);
+        localStorage.setItem('medisaarthi_invoices', JSON.stringify([newInvoice, ...filtered]));
+      } catch (e) {}
+
+      setPaymentSuccess(false);
+      setSelectedBookingForPay(null);
+    }, 1500);
+  };
+
+  // Prescriptions and diagnostic reports come from the Document API
+  // Empty arrays shown until API is connected to document service
+  const prescriptions = [];
+  const diagnosticReports = [];
+  const previousUploadedDocuments = [];
+
 
   // Dynamic filter
   const filteredPrescriptions = prescriptions.filter(rx => {
@@ -228,8 +150,21 @@ export default function PatientReportsPage() {
            rep.summary.toLowerCase().includes(q);
   });
 
+  const filteredBookings = registeredBookings.filter(bk => {
+    if (activeTab === 'prescriptions' || activeTab === 'reports' || activeTab === 'previous') return false;
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (bk.doctorName || '').toLowerCase().includes(q) ||
+      (bk.specialization || '').toLowerCase().includes(q) ||
+      (bk.chiefComplaint || '').toLowerCase().includes(q) ||
+      (bk.appointmentId || '').toLowerCase().includes(q) ||
+      (bk.roomNumber || '').toLowerCase().includes(q)
+    );
+  });
+
   const filteredPreviousDocs = previousUploadedDocuments.filter(doc => {
-    if (activeTab === 'prescriptions' || activeTab === 'reports') return false;
+    if (activeTab === 'bookings' || activeTab === 'prescriptions' || activeTab === 'reports') return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return doc.title.toLowerCase().includes(q) ||
@@ -238,7 +173,7 @@ export default function PatientReportsPage() {
            doc.summary.toLowerCase().includes(q);
   });
 
-  const totalCount = filteredPrescriptions.length + filteredReports.length + filteredPreviousDocs.length;
+  const totalCount = filteredBookings.length + filteredPrescriptions.length + filteredReports.length + filteredPreviousDocs.length;
 
   return (
     <DashboardLayout>
@@ -255,7 +190,7 @@ export default function PatientReportsPage() {
                 {isHindi ? 'स्वास्थ्य रिपोर्ट एवं डॉक्टर के पर्चे' : 'Medical Reports & Prescriptions Vault'}
               </h1>
               <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#18A999]/15 text-[#18A999] border border-[#18A999]/30 font-mono">
-                {prescriptions.length + diagnosticReports.length + previousUploadedDocuments.length} {isHindi ? 'दस्तावेज़ सुरक्षित' : 'Records Saved'}
+                {registeredBookings.length + prescriptions.length + diagnosticReports.length + previousUploadedDocuments.length} {isHindi ? 'दस्तावेज़ सुरक्षित' : 'Records Saved'}
               </span>
             </div>
             <p className="text-xs text-slate-600 dark:text-[#a1a1aa] max-w-xl leading-relaxed">
@@ -303,7 +238,8 @@ export default function PatientReportsPage() {
             {/* Category Tabs */}
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
               {[
-                { id: 'all', label: isHindi ? 'सभी रिकॉर्ड' : 'All Records', count: prescriptions.length + diagnosticReports.length + previousUploadedDocuments.length },
+                { id: 'all', label: isHindi ? 'सभी रिकॉर्ड' : 'All Records', count: registeredBookings.length + prescriptions.length + diagnosticReports.length + previousUploadedDocuments.length },
+                { id: 'bookings', label: isHindi ? 'पंजीकृत डॉक्टर बुकिंग' : 'Doctor Consultations', count: registeredBookings.length },
                 { id: 'prescriptions', label: isHindi ? 'डॉक्टर पर्चे (Rx)' : 'Doctor Prescriptions', count: prescriptions.length },
                 { id: 'reports', label: isHindi ? 'लैब रिपोर्ट' : 'Lab Reports', count: diagnosticReports.length },
                 { id: 'previous', label: isHindi ? 'पूर्व अपलोड दस्तावेज़' : 'Previous Documents', count: previousUploadedDocuments.length }
@@ -326,6 +262,108 @@ export default function PatientReportsPage() {
             </div>
           </div>
         </div>
+
+        {/* SECTION 0: REGISTERED VOICE-ASSISTED CONSULTATIONS & DOCTOR BOOKINGS */}
+        {(activeTab === 'all' || activeTab === 'bookings') && filteredBookings.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 font-newsreader">
+                <Stethoscope className="w-4 h-4 text-[#18A999]" />
+                <span>{isHindi ? 'पंजीकृत डॉक्टर परामर्श व वॉइस सारांश (Registered Bookings)' : 'Voice-Assisted Doctor Consultations & Triage Bookings'}</span>
+              </h2>
+              <span className="text-xs text-slate-400 font-mono">{filteredBookings.length} Bookings</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredBookings.map((bk) => (
+                <div 
+                  key={bk.appointmentId || bk.id}
+                  className="bg-white dark:bg-[#111111] border-2 border-[#18A999]/40 hover:border-[#18A999] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3.5 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-[#1f1f23] pb-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#18A999]/20 text-[#18A999] font-mono">
+                          {bk.appointmentId}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-400 font-mono">
+                          Token {bk.tokenNumber || user?.token || 'Assigned'}
+                        </span>
+                        {bk.redFlagPresent && (
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-500 text-white font-mono animate-pulse">
+                            EMERGENCY
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white font-newsreader">
+                        {bk.doctorName}
+                      </h3>
+                      <p className="text-[11px] text-[#18A999] font-bold">
+                        {bk.specialization || bk.department}
+                      </p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block font-mono">
+                        🕒 {bk.slotTime || '11:15 AM'}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {bk.roomNumber || 'Room OPD-102'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-black border border-slate-200 dark:border-[#27272a] text-xs space-y-1">
+                    <span className="text-[10px] text-slate-400 uppercase font-mono block">Recorded Complaint / Symptoms:</span>
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">{bk.chiefComplaint || 'Pre-consultation clinical intake recorded'}</p>
+                  </div>
+
+                  {/* Payment & Action Strip */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-[#1f1f23] flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      {paidBookings[bk.appointmentId || bk.id] ? (
+                        <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{isHindi ? 'परामर्श शुल्क भुगतान संपन्न (₹500)' : 'Fee Paid: ₹500 (Confirmed)'}</span>
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-mono font-extrabold text-amber-500 dark:text-amber-400">
+                            Fee: ₹500
+                          </span>
+                          <button
+                            onClick={() => setSelectedBookingForPay(bk)}
+                            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-black font-extrabold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                          >
+                            <CreditCard className="w-3.5 h-3.5" />
+                            <span>{isHindi ? 'फीस भुगतान करें (₹500)' : 'Pay Consultation Fee'}</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {paidBookings[bk.appointmentId || bk.id] && (
+                        <Link href={`/patient/bills?receipt=INV-2026-${bk.appointmentId || 'OPD-102'}`}>
+                          <button className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] text-slate-700 dark:text-slate-300 hover:border-[#18A999] hover:text-[#18A999] text-xs font-semibold flex items-center gap-1 transition-all">
+                            <Receipt className="w-3.5 h-3.5 text-[#18A999]" />
+                            <span>{isHindi ? 'रसीद देखें' : 'View Receipt'}</span>
+                          </button>
+                        </Link>
+                      )}
+
+                      <Link href={`/doctor/patients/${user?.patientId || bk.patientId || ''}`}>
+                        <button className="px-3 py-1.5 rounded-xl bg-[#18A999] hover:bg-[#148e81] text-black text-xs font-bold transition-all shadow-xs">
+                          {isHindi ? 'क्लिनिकल समरी' : 'Clinical Summary'}
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* SECTION 1: DOCTOR E-PRESCRIPTIONS */}
         {(activeTab === 'all' || activeTab === 'prescriptions') && filteredPrescriptions.length > 0 && (
@@ -384,7 +422,7 @@ export default function PatientReportsPage() {
                       {isHindi ? 'निर्धारित दवाएं (Prescribed Rx):' : 'Prescribed Medications:'}
                     </span>
                     <div className="space-y-1.5">
-                      {rx.medications.map((med, mIdx) => (
+                      {(rx.medications || []).map((med, mIdx) => (
                         <div key={mIdx} className="p-2 rounded-lg bg-slate-50/70 dark:bg-[#161616] border border-slate-100 dark:border-[#222226] text-xs flex items-center justify-between gap-2">
                           <div>
                             <span className="font-bold text-slate-900 dark:text-white">{med.name}</span>
@@ -470,7 +508,7 @@ export default function PatientReportsPage() {
                     <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-black border border-slate-200 dark:border-[#27272a] space-y-1">
                       <span className="text-[9px] font-bold text-slate-400 font-mono uppercase">OCR Extracted Highlights:</span>
                       <div className="space-y-1">
-                        {rep.keyFindings.slice(0, 3).map((f, fIdx) => (
+                        {(rep.keyFindings || []).slice(0, 3).map((f, fIdx) => (
                           <div key={fIdx} className="flex justify-between text-[11px]">
                             <span className="text-slate-600 dark:text-slate-400 truncate">{f.marker}:</span>
                             <span className={`font-mono font-bold ${f.flag === 'High' ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
@@ -656,7 +694,7 @@ export default function PatientReportsPage() {
 
                 <div className="space-y-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">Medication Schedule:</span>
-                  {selectedRecordForPreview.data.medications.map((m, idx) => (
+                  {(selectedRecordForPreview.data.medications || []).map((m, idx) => (
                     <div key={idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-black border border-slate-200 dark:border-[#27272a] text-xs space-y-0.5">
                       <div className="flex justify-between font-bold">
                         <span>{m.name} ({m.dosage})</span>
@@ -697,7 +735,7 @@ export default function PatientReportsPage() {
                 <div className="space-y-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">Extracted Test Values:</span>
                   <div className="space-y-1.5">
-                    {selectedRecordForPreview.data.keyFindings.map((f, idx) => (
+                    {(selectedRecordForPreview.data.keyFindings || []).map((f, idx) => (
                       <div key={idx} className="p-2 rounded-xl bg-slate-50 dark:bg-black border border-slate-200 dark:border-[#27272a] text-xs flex items-center justify-between">
                         <div>
                           <span className="font-semibold text-slate-900 dark:text-white">{f.marker}</span>
@@ -771,6 +809,109 @@ export default function PatientReportsPage() {
                   </Button>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Pay Consultation Fee Modal */}
+      {selectedBookingForPay && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#27272a] rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+            <button
+              onClick={() => setSelectedBookingForPay(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {paymentSuccess ? (
+              <div className="text-center py-6 space-y-4 animate-fadeIn">
+                <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-xl">
+                  <CheckCircle2 className="w-10 h-10" />
+                </div>
+                <h3 className="text-xl font-extrabold text-slate-900 dark:text-white font-newsreader">
+                  {isHindi ? 'परामर्श शुल्क भुगतान सफल रहा!' : 'Consultation Payment Completed!'}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {isHindi 
+                    ? `डॉ. ${selectedBookingForPay.doctorName} के लिए ₹500 का भुगतान दर्ज हो गया है। रसीद इनवॉइस में उपलब्ध है।`
+                    : `Transaction confirmed for ${selectedBookingForPay.appointmentId || 'Appointment'}. Official tax invoice generated.`}
+                </p>
+                <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-mono font-bold text-emerald-800 dark:text-emerald-300">
+                  Paid: ₹500 via UPI • Token {selectedBookingForPay.tokenNumber || user?.token || 'Confirmed'}
+                </div>
+
+                <div className="pt-2 flex flex-col gap-2">
+                  <Link href={`/patient/bills?receipt=INV-2026-${selectedBookingForPay.appointmentId || 'OPD'}`}>
+                    <Button variant="primary" fullWidth icon={Receipt}>
+                      {isHindi ? 'बिल व इनवॉइस में रसीद देखें' : 'View Receipt in Bills & Invoices'}
+                    </Button>
+                  </Link>
+                  <Button variant="secondary" fullWidth onClick={() => setSelectedBookingForPay(null)}>
+                    {isHindi ? 'बंद करें' : 'Close'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="text-center space-y-1">
+                  <span className="text-[10px] font-mono text-[#18A999] uppercase font-bold tracking-wider">
+                    {selectedBookingForPay.appointmentId || 'OPD CONSULTATION'}
+                  </span>
+                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-white font-newsreader">
+                    {isHindi ? 'डॉक्टर परामर्श शुल्क का भुगतान' : 'Pay OPD Consultation Fee'}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {selectedBookingForPay.doctorName} • {selectedBookingForPay.specialization || 'Specialist OPD'}
+                  </p>
+                </div>
+
+                {/* Consultation Details & Amount */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-black border border-slate-200 dark:border-[#27272a] space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Doctor Slot:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{selectedBookingForPay.slotTime || 'Today'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Token Number:</span>
+                    <span className="font-bold text-emerald-500 font-mono">{selectedBookingForPay.tokenNumber || user?.token || '—'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Location:</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{selectedBookingForPay.roomNumber || 'Consultation Desk'}</span>
+                  </div>
+                  <div className="border-t border-slate-200 dark:border-[#27272a] pt-2 flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Total Consultation Fee:</span>
+                    <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                      ₹500
+                    </span>
+                  </div>
+                </div>
+
+                {/* UPI QR Code Simulator */}
+                <div className="p-4 rounded-2xl bg-gradient-to-b from-[#0F4C5C]/10 to-transparent border border-[#18A999]/30 flex flex-col items-center space-y-2 text-center">
+                  <div className="p-3 bg-white rounded-2xl shadow-md border border-slate-200">
+                    <QrCode className="w-28 h-28 text-slate-900" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    Scan via Google Pay, PhonePe, or Paytm
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">UPI ID: maxhospital.delhi@icici</span>
+                </div>
+
+                {/* Direct Pay Action */}
+                <div className="space-y-2 pt-1">
+                  <Button
+                    variant="primary"
+                    fullWidth
+                    onClick={() => handlePayConsultation(selectedBookingForPay)}
+                    icon={CheckCircle2}
+                  >
+                    {isHindi ? '₹500 का यूपीआई भुगतान पूर्ण करें' : 'Simulate UPI Payment (₹500)'}
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         </div>
