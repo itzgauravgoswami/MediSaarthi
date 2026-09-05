@@ -118,20 +118,27 @@ export default function PatientDocumentsPage() {
     clearInterval(interval);
     setProcessingStage(4);
 
-    const finalOcrText = ocrText || clientText || `[OCR Text Scanned from ${fileName}]\nFile Name: ${fileName}\nFile Size: ${fileSizeFormatted}\nType: ${fileType}\nScan Timestamp: ${new Date().toLocaleString()}\nStatus: Verified Scanned Record.`;
+    const finalOcrText = ocrText || clientText || `[OCR Text Scanned from ${fileName}]\nFile Name: ${fileName}\nFile Size: ${fileSizeFormatted}\nType: ${fileType}\nScan Timestamp: ${new Date().toLocaleString()}`;
 
-    // Relevance & Medical Document Validation strictly based on OCR text content & Gemini AI analysis
-    const nonMedicalOcrPattern = /marksheet|mark\s*sheet|roll\s*no|board\s*of\s*secondary|cbse|icse|passing\s*certificate|semester\s*grade|grade\s*point|total\s*marks|theory\s*marks|practical\s*marks|tax\s*invoice|bill\s*to|gstin|subtotal|receipt\s*no|curriculum\s*vitae|driving\s*licen|voter\s*id|aadhaar/i;
-    const medicalOcrPattern = /prescription|hospital|clinic|doctor|dr\.|patient|rx|diagnosis|treatment|tablet|capsule|mg\b|ml\b|dosage|symptoms|blood|haemoglobin|hba1c|wbc|rbc|platelets|urine|fever|cough|chest|pain|disease|syrup|injection|opd|ipd|discharge|pathology|radiology|ultrasound|ecg|x-ray/i;
+    // Comprehensive detection of non-medical vs medical documents
+    const nonMedicalFileNamePattern = /marksheet|mark\s*sheet|roll\s*no|grade\s*sheet|result|board|cbse|icse|invoice|tax|receipt|bill|salary|payslip|statement|resume|curriculum|cv|aadhaar|aadhar|pan[_\s-]?card|driving|license|licence|voter|ticket|boarding|electricity|water\s*bill|certificate/i;
+    const nonMedicalOcrPattern = /marksheet|mark\s*sheet|roll\s*no|board\s*of\s*secondary|cbse|icse|passing\s*certificate|semester\s*grade|grade\s*point|total\s*marks|theory\s*marks|practical\s*marks|tax\s*invoice|bill\s*to|gstin|subtotal|receipt\s*no|curriculum\s*vitae|driving\s*licen|voter\s*id|aadhaar|monthly\s*statement|account\s*number|ifsc\s*code|bank\s*statement|ticket\s*no|boarding\s*pass|electricity\s*bill|utility\s*bill/i;
+    const medicalOcrPattern = /prescription|hospital|clinic|doctor|dr\.|patient|rx|diagnosis|treatment|tablet|capsule|mg\b|ml\b|dosage|symptoms|blood|haemoglobin|hba1c|wbc|rbc|platelets|urine|fever|cough|chest|pain|disease|syrup|injection|opd|ipd|discharge|pathology|radiology|ultrasound|ecg|x-ray|clinical/i;
 
     const ocrSample = (ocrText || clientText || '').trim();
+    const isNonMedicalByName = nonMedicalFileNamePattern.test(fileName);
+    const isNonMedicalByOcr = nonMedicalOcrPattern.test(ocrSample) && !medicalOcrPattern.test(ocrSample);
     
     // Evaluate strictly based on OCR content & Gemini AI verdict
     let isNonMedical = false;
     if (parsedData && typeof parsedData.isMedicalDocument === 'boolean') {
       isNonMedical = !parsedData.isMedicalDocument;
-    } else if (ocrSample.length > 0) {
-      isNonMedical = nonMedicalOcrPattern.test(ocrSample) && !medicalOcrPattern.test(ocrSample);
+    } else if (parsedData && typeof parsedData.isMedical === 'boolean') {
+      isNonMedical = !parsedData.isMedical;
+    } else if (isNonMedicalByName || isNonMedicalByOcr) {
+      isNonMedical = true;
+    } else if (ocrSample.length > 0 && !medicalOcrPattern.test(ocrSample)) {
+      isNonMedical = true;
     }
 
     const isMedical = !isNonMedical;

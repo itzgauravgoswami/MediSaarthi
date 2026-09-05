@@ -256,6 +256,19 @@ export default function PatientInterviewPage() {
     }
   };
 
+  // Helper to check for urgent emergency keywords
+  const isEmergencyText = (text = '') => {
+    const lower = text.toLowerCase();
+    const emergencyKeywords = [
+      'emergency', 'आपातकाल', 'आपातकालीन', 'help me', 'save me', 'मदद', 'madad',
+      '108', 'ambulance', 'heart attack', 'हार्ट अटैक', 'दिल का दौरा', 'chest pain',
+      'सीने में दर्द', 'सीने में बहुत तेज दर्द', 'छाती में दर्द', 'breathless', 'cannot breathe',
+      'सांस फूल', 'सांस नहीं आ रही', 'दम घुट', 'stroke', 'स्ट्रोक', 'लकवा', 'unconscious',
+      'बेहोश', 'fainted', 'चक्कर खाकर गिर', 'vomiting blood', 'खून की उल्टी', 'poison', 'ज़हर','cancer'
+    ];
+    return emergencyKeywords.some(k => lower.includes(k));
+  };
+
   // Submit patient's spoken words to backend Voice Analysis, Relevance Guard & Slot Booking
   const submitLiveTurn = async (patientSpeechText) => {
     if (!patientSpeechText || !patientSpeechText.trim() || isEmergencyLocked || isCompleted) return;
@@ -268,27 +281,44 @@ export default function PatientInterviewPage() {
       { sender: 'patient', text: patientText, timestamp: new Date().toLocaleTimeString() }
     ]);
 
+    const isExplicitEmergency = isEmergencyText(patientText);
+
     try {
       const patientId = user?.patientId || intakeState?.patientId || user?.id;
 
       // 1. Run AI Voice Clinical Triage & Emergency Analysis
-      const voiceResult = await emergencyApi.analyseVoice({
-        transcript: patientText,
-        patientId,
-        language: langCode,
-        patientName: user?.name || ''
-      }).catch(err => {
+      let voiceResult = null;
+      try {
+        voiceResult = await emergencyApi.analyseVoice({
+          transcript: patientText,
+          patientId,
+          language: langCode,
+          patientName: user?.name || ''
+        });
+      } catch (err) {
         console.warn('[Emergency Analysis Error]', err.message);
-        return null;
-      });
+      }
+
+      const urgency = voiceResult?.assessment?.urgency;
+      const isEmergencyDetected = isExplicitEmergency || voiceResult?.emergency || urgency === 'EMERGENCY';
 
       if (voiceResult?.assessment) {
         setLatestAssessment(voiceResult.assessment);
+      } else if (isEmergencyDetected) {
+        setLatestAssessment({
+          urgency: 'EMERGENCY',
+          confidence: 0.99,
+          symptoms: [patientText.substring(0, 50)],
+          riskIndicators: ['Acute Clinical Emergency Presentation'],
+          reason: isHindi 
+            ? 'आपातकालीन लक्षण पाए गए हैं। मरीज की सुरक्षा हेतु प्रश्नावली रोक दी गई है।' 
+            : 'Acute emergency symptoms detected. Questionnaire paused for clinical safety.'
+        });
       }
 
       // CRITICAL: If EMERGENCY is detected, immediately lock questionnaire and show doctor details!
-      if (voiceResult?.emergency || voiceResult?.assessment?.urgency === 'EMERGENCY') {
-        const emergencyData = voiceResult.emergency || {
+      if (isEmergencyDetected) {
+        const emergencyData = voiceResult?.emergency || {
           eventId: 'EMERG-' + Date.now().toString(36).toUpperCase(),
           status: 'ALERTING',
           assignedDoctorName: 'Dr. Vikramaditya Rao',
@@ -317,8 +347,8 @@ export default function PatientInterviewPage() {
           { 
             sender: 'ai', 
             text: isHindi 
-              ? `🚨 आपातकालीन अलर्ट: आपकी सुरक्षा हेतु सामान्य प्रश्नावली रोक दी गई है। विशेषज्ञ डॉक्टर ${emergencyData.assignedDoctorName} को आपकी स्थिति भेज दी गई है।`
-              : `🚨 Emergency Alert: Intake questionnaire paused for your safety. Notified specialist ${emergencyData.assignedDoctorName}.`, 
+              ? `🚨 आपातकालीन अलर्ट: आपकी सुरक्षा हेतु सामान्य प्रश्नावली रोक दी गई है। विशेषज्ञ डॉक्टर ${emergencyData.assignedDoctorName || 'डॉ. विक्रम राव'} को आपकी स्थिति भेज दी गई है।`
+              : `🚨 Emergency Alert: Intake questionnaire paused for your safety. Notified specialist ${emergencyData.assignedDoctorName || 'Dr. Vikramaditya Rao'}.`, 
             timestamp: new Date().toLocaleTimeString() 
           }
         ]);
@@ -428,7 +458,7 @@ export default function PatientInterviewPage() {
     try {
       const patientId = user?.patientId || intakeState?.patientId || user?.id;
       
-      const emergencyData = {
+      let emergencyData = {
         eventId: 'EMERG-MANUAL-' + Date.now().toString(36).toUpperCase(),
         status: 'ALERTING',
         assignedDoctorName: 'Dr. Vikramaditya Rao',
@@ -444,6 +474,18 @@ export default function PatientInterviewPage() {
         }
       };
 
+      setLatestAssessment({
+        urgency: 'EMERGENCY',
+        confidence: 1.0,
+        symptoms: isHindi 
+          ? ['आपातकालीन सहायता अनुरोध', '108 आपातकालीन सहायता', 'तत्काल चिकित्सक हस्तक्षेप'] 
+          : ['Manual Emergency Help Request', '108 Emergency Override', 'Immediate Physician Assistance'],
+        riskIndicators: ['Manual Emergency SOS Triggered', 'Critical Physician Review Required'],
+        reason: isHindi
+          ? 'मरीज द्वारा आपातकालीन सहायता (Emergency Help) का अनुरोध किया गया है। सामान्य इनटेक रोक दी गई है।'
+          : 'Patient triggered manual emergency help request. Standard intake suspended for immediate clinical attention.'
+      });
+
       setActiveEmergency(emergencyData);
       setIsEmergencyLocked(true);
       speechManagerRef.current?.stopListening();
@@ -455,24 +497,33 @@ export default function PatientInterviewPage() {
           symptoms: ['Patient manually pressed Emergency Help button'],
           notes: 'Immediate assistance requested by patient via 108 Alert override.'
         });
-        if (res && res.eventId) {
-          setActiveEmergency(prev => ({ ...prev, eventId: res.eventId, status: res.status || 'ALERTING' }));
+        if (res) {
+          emergencyData = {
+            ...emergencyData,
+            ...res,
+            eventId: res.eventId || emergencyData.eventId,
+            status: res.status || 'ALERTING',
+            assignedDoctorName: res.assignedDoctorName || emergencyData.assignedDoctorName,
+            doctor: res.doctor || emergencyData.doctor
+          };
+          setActiveEmergency(emergencyData);
         }
       } catch (e) {
         console.warn('[Manual Emergency Dispatch Note]', e.message);
       }
 
+      const assignedDocName = emergencyData.assignedDoctorName || emergencyData.doctor?.name || (isHindi ? 'डॉ. विक्रम राव' : 'Dr. Vikramaditya Rao');
       const alertMsg = isHindi
-        ? 'आपातकालीन सहायता अनुरोध दर्ज कर लिया गया है। आपातकालीन चिकित्सक डॉ. विक्रम राव को सूचित कर दिया गया है।'
-        : 'Emergency help request registered. Specialist physician Dr. Vikramaditya Rao has been alerted for immediate care.';
+        ? `आपातकालीन सहायता अनुरोध दर्ज कर लिया गया है। आपातकालीन चिकित्सक ${assignedDocName} को सूचित कर दिया गया है।`
+        : `Emergency help request registered. Specialist physician ${assignedDocName} has been alerted for immediate care.`;
 
       setConversationHistory(prev => [
         ...prev,
         { 
           sender: 'ai', 
           text: isHindi 
-            ? '🚨 आपातकालीन अलर्ट: सामान्य प्रश्नावली रोक दी गई है। आपातकालीन डॉक्टर डॉ. विक्रम राव को आपकी सूचना भेज दी गई है।'
-            : '🚨 Emergency Alert: Normal questionnaire paused. Alert dispatched to Dr. Vikramaditya Rao.',
+            ? `🚨 आपातकालीन अलर्ट: सामान्य प्रश्नावली रोक दी गई है। आपातकालीन डॉक्टर ${assignedDocName} को आपकी सूचना भेज दी गई है।`
+            : `🚨 Emergency Alert: Normal questionnaire paused. Alert dispatched to ${assignedDocName}.`,
           timestamp: new Date().toLocaleTimeString() 
         }
       ]);
@@ -888,7 +939,7 @@ export default function PatientInterviewPage() {
                     title="Trigger immediate clinical emergency"
                   >
                     <ShieldAlert className="w-4 h-4 text-white" />
-                    <span>🚨 Emergency Help</span>
+                    <span>{isHindi ? '🚨 आपातकालीन सहायता' : '🚨 Emergency Help'}</span>
                   </button>
                 </div>
 

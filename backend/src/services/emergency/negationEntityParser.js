@@ -82,14 +82,40 @@ function normalizePositiveKeywords(symptoms = [], narrative = '') {
   
   const keywords = new Set();
 
-  // Cardiac & Chest
-  if (positiveText.includes('chest pain') || positiveText.includes('सीने में दर्द') || positiveText.includes('chest tightness') || positiveText.includes('छाती में दर्द') || positiveText.includes('precordial pain')) {
+  // Explicit Emergency / SOS / Assistance Request
+  if (
+    positiveText.includes('emergency') || 
+    positiveText.includes('आपातकाल') || 
+    positiveText.includes('आपातकालीन') || 
+    positiveText.includes('help me') || 
+    positiveText.includes('save me') || 
+    positiveText.includes('मदद') || 
+    positiveText.includes('madad') || 
+    positiveText.includes('108') || 
+    positiveText.includes('ambulance') || 
+    positiveText.includes('sos') || 
+    positiveText.includes('urgent help') || 
+    positiveText.includes('immediate assistance') || 
+    positiveText.includes('emergency doctor') || 
+    positiveText.includes('तत्काल सहायता')
+  ) {
+    keywords.add('emergency_help_request');
+    keywords.add('explicit_emergency');
+  }
+
+  // Cardiac & Chest & Heart Attack
+  if (positiveText.includes('heart attack') || positiveText.includes('हार्ट अटैक') || positiveText.includes('दिल का दौरा') || positiveText.includes('cardiac arrest') || positiveText.includes('severe chest pain') || positiveText.includes('सीने में बहुत तेज दर्द') || positiveText.includes('सीने में तीव्र दर्द')) {
+    keywords.add('heart_attack');
+    keywords.add('chest_pain');
+    keywords.add('severe_chest_pain');
+  }
+  if (positiveText.includes('chest pain') || positiveText.includes('सीने में दर्द') || positiveText.includes('chest tightness') || positiveText.includes('छाती में दर्द') || positiveText.includes('precordial pain') || positiveText.includes('chest discomfort')) {
     keywords.add('chest_pain');
   }
-  if (positiveText.includes('breath') || positiveText.includes('dyspnea') || positiveText.includes('सांस फूल') || positiveText.includes('सांस लेने में') || positiveText.includes('shortness of breath')) {
+  if (positiveText.includes('breath') || positiveText.includes('dyspnea') || positiveText.includes('सांस फूल') || positiveText.includes('सांस लेने में') || positiveText.includes('shortness of breath') || positiveText.includes('breathing difficulty')) {
     keywords.add('breathlessness');
   }
-  if (positiveText.includes('severe breathlessness') || positiveText.includes('cannot breathe') || positiveText.includes('सांस नहीं आ रही') || positiveText.includes('दम घुट')) {
+  if (positiveText.includes('severe breathlessness') || positiveText.includes('cannot breathe') || positiveText.includes('सांस नहीं आ रही') || positiveText.includes('दम घुट') || positiveText.includes('दम घुट रहा')) {
     keywords.add('severe_breathlessness');
     keywords.add('breathlessness');
   }
@@ -107,6 +133,10 @@ function normalizePositiveKeywords(symptoms = [], narrative = '') {
   }
 
   // Stroke / FAST Neurological
+  if (positiveText.includes('stroke') || positiveText.includes('स्ट्रोक') || positiveText.includes('लकवा')) {
+    keywords.add('slurred_speech');
+    keywords.add('sudden_paralysis');
+  }
   if (positiveText.includes('slur') || positiveText.includes('bolne me') || positiveText.includes('बोलने में लड़खड़ाहट') || positiveText.includes('speech difficulty')) {
     keywords.add('slurred_speech');
   }
@@ -121,10 +151,11 @@ function normalizePositiveKeywords(symptoms = [], narrative = '') {
     keywords.add('sudden_vision_loss');
   }
 
-  // Unconscious
-  if (positiveText.includes('unconscious') || positiveText.includes('बेहोश') || positiveText.includes('unresponsive') || positiveText.includes('होश नहीं') || positiveText.includes('fainted')) {
+  // Unconscious & Collapse
+  if (positiveText.includes('unconscious') || positiveText.includes('बेहोश') || positiveText.includes('unresponsive') || positiveText.includes('होश नहीं') || positiveText.includes('fainted') || positiveText.includes('collapsed') || positiveText.includes('गिर पड़े') || positiveText.includes('चक्कर खाकर गिर')) {
     keywords.add('unconscious');
     keywords.add('unresponsive');
+    keywords.add('collapsed');
   }
 
   // Anaphylaxis

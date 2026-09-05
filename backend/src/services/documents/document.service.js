@@ -37,39 +37,43 @@ class DocumentService {
     const extractionResult = await extractMedicalEntities(ocrResult.rawText);
 
     // 4. Persist Document
+    const isMedical = extractionResult.isMedicalDocument !== false;
+
     let document;
     try {
       document = await Document.create({
         documentId,
         patientId,
-        type,
+        type: isMedical ? type : 'OTHER',
         originalFileName: file.originalname,
         storageKey: storageResult.storageKey,
         mimeType: file.mimetype,
         size: file.size,
-        status: 'COMPLETED',
+        status: isMedical ? 'COMPLETED' : 'WARNING',
+        isMedical: isMedical,
         ocrStatus: 'COMPLETED',
         extractionStatus: 'COMPLETED',
         ocrText: ocrResult.rawText,
         extractedData: extractionResult,
-        confidence: ocrResult.confidence ? Math.round(ocrResult.confidence * 100) : (extractionResult.confidenceScore || 90)
+        confidence: ocrResult.confidence ? Math.round(ocrResult.confidence * 100) : (extractionResult.confidenceScore || (isMedical ? 90 : 30))
       });
     } catch (e) {
       document = {
         documentId,
         patientId,
-        type,
+        type: isMedical ? type : 'OTHER',
         originalFileName: file.originalname,
         storageKey: storageResult.storageKey,
-        status: 'COMPLETED',
+        status: isMedical ? 'COMPLETED' : 'WARNING',
+        isMedical: isMedical,
         ocrText: ocrResult.rawText,
         extractedData: extractionResult,
         createdAt: new Date()
       };
     }
 
-    // 5. Save extracted medications
-    if (extractionResult.medications && extractionResult.medications.length > 0) {
+    // 5. Save extracted medications (Only for valid medical documents)
+    if (isMedical && extractionResult.medications && extractionResult.medications.length > 0) {
       for (const med of extractionResult.medications) {
         try {
           await Medication.create({
@@ -87,20 +91,33 @@ class DocumentService {
       }
     }
 
-    // 6. Sync to longitudinal timeline
-    await documentTimelineService.syncDocumentToTimeline(document);
+    // 6. Sync to longitudinal timeline (Only for valid medical documents)
+    if (isMedical) {
+      await documentTimelineService.syncDocumentToTimeline(document);
+    }
 
-    // 7. Notify Doctor
-    await notificationService.createNotification({
-      recipientRole: 'DOCTOR',
-      type: 'DOCUMENT_PROCESSED',
-      title: 'Medical Document Processed',
-      message: `Prescription/Report processed for Patient (${patientId}). ${extractionResult.medications?.length || 0} medications extracted.`,
-      resourceType: 'Document',
-      resourceId: documentId
-    });
+    // 7. Notify Doctor / User
+    if (isMedical) {
+      await notificationService.createNotification({
+        recipientRole: 'DOCTOR',
+        type: 'DOCUMENT_PROCESSED',
+        title: 'Medical Document Processed',
+        message: `Prescription/Report processed for Patient (${patientId}). ${extractionResult.medications?.length || 0} medications extracted.`,
+        resourceType: 'Document',
+        resourceId: documentId
+      });
+    } else {
+      await notificationService.createNotification({
+        recipientRole: 'PATIENT',
+        type: 'DOCUMENT_REJECTED',
+        title: 'Non-Medical Document Uploaded',
+        message: `Uploaded file "${file.originalname}" was detected as non-medical/unrelated. Please upload a valid prescription or medical report.`,
+        resourceType: 'Document',
+        resourceId: documentId
+      });
+    }
 
-    logger.info(`[Document Pipeline] Successfully processed document ${documentId} (Storage: ${storageResult.provider}, OCR: ${ocrResult.provider})`);
+    logger.info(`[Document Pipeline] Successfully processed document ${documentId} (Medical: ${isMedical}, Storage: ${storageResult.provider}, OCR: ${ocrResult.provider})`);
     return document;
   }
 

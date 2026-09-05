@@ -3,16 +3,28 @@ const { RED_FLAG_PRIORITY, CLINICAL_URGENCY } = require('../../constants/statuse
 
 const CLINICAL_EMERGENCY_RULES = [
   {
-    id: 'EMERG_CARDIAC_001',
-    name: 'Acute Coronary Syndrome Risk (Severe Chest Pain with Dyspnea / Radiation)',
-    specialty: 'Cardiology',
-    backupSpecialties: ['Emergency Medicine', 'Internal Medicine'],
-    requiredKeywords: ['chest_pain'],
-    coFactorKeywords: ['breathlessness', 'arm_radiation', 'jaw_radiation', 'diaphoresis', 'severe_pressure'],
-    minCoFactors: 1,
+    id: 'EMERG_EXPLICIT_HELP_000',
+    name: 'Explicit Emergency / Immediate Assistance Request',
+    specialty: 'Emergency Medicine',
+    backupSpecialties: ['Internal Medicine', 'General Medicine'],
+    requiredKeywords: ['emergency_help_request', 'explicit_emergency', 'ambulance_request', 'sos_alert', 'immediate_help'],
+    minCoFactors: 0,
     priority: RED_FLAG_PRIORITY.IMMEDIATE,
     urgency: CLINICAL_URGENCY.EMERGENCY,
-    description: 'Patient reports acute chest discomfort associated with dyspnea, radiation to left arm/jaw, severe pressure, or diaphoresis.',
+    description: 'Patient explicitly requests emergency medical help, SOS escalation, or immediate ambulance dispatch.',
+    recommendedAction: 'IMMEDIATE_EMERGENCY_DISPATCH'
+  },
+  {
+    id: 'EMERG_CARDIAC_001',
+    name: 'Acute Coronary Syndrome Risk (Severe Chest Pain with Dyspnea / Radiation / Heart Attack)',
+    specialty: 'Cardiology',
+    backupSpecialties: ['Emergency Medicine', 'Internal Medicine'],
+    requiredKeywords: ['chest_pain', 'heart_attack', 'severe_chest_pain', 'cardiac_arrest'],
+    coFactorKeywords: ['breathlessness', 'arm_radiation', 'jaw_radiation', 'diaphoresis', 'severe_pressure', 'heart_attack', 'severe_chest_pain'],
+    minCoFactors: 0,
+    priority: RED_FLAG_PRIORITY.IMMEDIATE,
+    urgency: CLINICAL_URGENCY.EMERGENCY,
+    description: 'Patient reports acute chest discomfort, severe cardiac pain, heart attack symptoms, or chest pain associated with dyspnea/radiation.',
     recommendedAction: 'IMMEDIATE_CARDIAC_TRIAGE'
   },
   {

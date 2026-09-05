@@ -28,6 +28,12 @@ const DocumentSchema = new mongoose.Schema({
   ocrText: { type: String },
 
   extractedData: {
+    isMedicalDocument: { type: Boolean, default: true },
+    relevanceMessage: { type: String },
+    relevanceMessageHindi: { type: String },
+    reportSummary: { type: String },
+    reportSummaryHindi: { type: String },
+    confidenceScore: { type: Number },
     diagnoses: [{ type: String }],
     medications: [{
       name: { type: String },
@@ -47,6 +53,7 @@ const DocumentSchema = new mongoose.Schema({
     documentDate: { type: Date }
   },
 
+  isMedical: { type: Boolean, default: true },
   confidence: { type: Number, default: 0.9 },
   uploadedBy: { type: String, default: 'PATIENT' },
   verifiedBy: { type: String },

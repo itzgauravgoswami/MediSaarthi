@@ -10,17 +10,22 @@ async function extractMedicalEntities(rawText) {
   const fallback = () => {
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-    const nonMedicalKeywords = /marksheet|mark\s*sheet|roll\s*no|board\s*of|school|college|university|cbse|icse|passing\s*certificate|semester|grade\s*point|subject\s*code|total\s*marks|theory|practical|max\s*marks|invoice|tax\s*invoice|bill\s*to|gstin|subtotal|receipt\s*no|resume|curriculum\s*vitae|driving\s*licen|voter\s*id|aadhaar|pan\s*card/i;
-    const medicalKeywords = /prescription|hospital|clinic|doctor|dr\.|patient|rx|diagnosis|treatment|tablet|capsule|mg\b|ml\b|dosage|symptoms|bp\b|pulse|heart|cardio|blood|haemoglobin|hba1c|wbc|rbc|platelets|urine|fever|cough|chest|pain|disease|syrup|injection|opd|ipd|discharge|pathology|radiology|ultrasound|ecg|x-ray/i;
+    const nonMedicalKeywords = /\b(marksheet|mark\s*sheet|roll\s*no|board\s*of|school|college|university|cbse|icse|passing\s*certificate|semester|grade\s*point|subject\s*code|total\s*marks|theory|practical|max\s*marks|degree|admit\s*card|syllabus|assignment|invoice|tax\s*invoice|bill\s*to|gstin|subtotal|receipt\s*no|shopping|grocery|restaurant|food\s*order|amazon|flipkart|electricity\s*bill|water\s*bill|gas\s*bill|salary\s*slip|payslip|bank\s*statement|passbook|account\s*summary|pan\s*card|aadhaar|voter\s*id|passport|driving\s*licen|vehicle\s*rc|resume|curriculum\s*vitae|cover\s*letter|offer\s*letter|contract|agreement|tenant|lease|ticket|boarding\s*pass|flight|train|bus\s*ticket|movie\s*ticket|challan)\b/i;
+    
+    const medicalKeywords = /\b(prescription|hospital|clinic|doctor|dr\b|dr\.|mbbs|md\b|patient|rx\b|diagnosis|diagnoses|treatment|tablet|capsule|mg\b|ml\b|dosage|od\b|bd\b|tds\b|hs\b|symptoms|vitals|bp\b|pulse|spo2|fever|cough|chest|pain|disease|syrup|injection|iv\b|opd|ipd|discharge\s*summary|pathology|radiology|ultrasound|usg|ecg|ekg|ct\s*scan|mri|x-ray|blood|haemoglobin|hemoglobin|hba1c|wbc|rbc|platelets|urine|creatinine|urea|bilirubin|sgot|sgpt|lipid|cholesterol|consultation|physician|medicine|clinical)\b/i;
 
-    const isNonMedical = nonMedicalKeywords.test(text) && !medicalKeywords.test(text);
+    const hasNonMedical = nonMedicalKeywords.test(text);
+    const hasMedical = medicalKeywords.test(text);
+
+    // If document matches non-medical keywords, or has zero medical keywords, flag as non-medical
+    const isNonMedical = hasNonMedical || (!hasMedical && text.length > 0);
 
     if (isNonMedical) {
       return {
         isMedicalDocument: false,
-        relevanceMessage: "The uploaded file appears to be a non-medical document (e.g. academic marksheet, certificate, or general record). Please upload a valid medical prescription, lab report, or clinical summary.",
-        relevanceMessageHindi: "अपलोड किया गया दस्तावेज़ गैर-चिकित्सीय (जैसे मार्कशीट, प्रमाण पत्र या रसीद) प्रतीत होता है। कृपया एक वैध मेडिकल पर्चा, लैब रिपोर्ट या डिस्चार्ज सारांश अपलोड करें।",
-        reportSummary: "Non-medical document detected. Please upload a valid medical prescription or clinical test report.",
+        relevanceMessage: "The uploaded file does not appear to be a medical record (e.g. academic marksheet, invoice, receipt, ID card, or general document). Please upload a valid medical prescription, lab report, or discharge summary.",
+        relevanceMessageHindi: "अपलोड किया गया दस्तावेज़ गैर-चिकित्सीय (जैसे मार्कशीट, प्रमाण पत्र, रसीद या सामान्य फ़ाइल) प्रतीत होता है। कृपया एक वैध मेडिकल पर्चा, लैब रिपोर्ट या डिस्चार्ज सारांश अपलोड करें।",
+        reportSummary: "Non-medical document detected. Please upload a valid clinical report or prescription.",
         reportSummaryHindi: "गैर-चिकित्सीय दस्तावेज़ पहचाना गया। कृपया वैध मेडिकल पर्चा या परीक्षण रिपोर्ट अपलोड करें।",
         diagnoses: [],
         medications: [],
@@ -100,7 +105,22 @@ async function extractMedicalEntities(rawText) {
     };
   };
 
-  return await generateStructuredJson(prompt, fallback);
+  const aiResult = await generateStructuredJson(prompt, fallback);
+
+  // If AI classified as non-medical, or fallback rule triggered, ensure clean non-medical output
+  if (aiResult && (aiResult.isMedicalDocument === false || aiResult.isMedical === false)) {
+    return {
+      ...aiResult,
+      isMedicalDocument: false,
+      relevanceMessage: aiResult.relevanceMessage || "The uploaded file does not appear to be a medical record (e.g. marksheet, invoice, or certificate). Please upload a valid medical prescription, lab report, or discharge summary.",
+      relevanceMessageHindi: aiResult.relevanceMessageHindi || "अपलोड किया गया दस्तावेज़ गैर-चिकित्सीय प्रतीत होता है। कृपया एक वैध मेडिकल पर्चा, लैब रिपोर्ट या डिस्चार्ज सारांश अपलोड करें।",
+      diagnoses: [],
+      medications: [],
+      investigations: []
+    };
+  }
+
+  return aiResult;
 }
 
 module.exports = {
