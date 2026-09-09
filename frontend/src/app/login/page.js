@@ -6,11 +6,12 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from "jwt-decode";
 import { 
   UserCheck, 
   Hospital, 
   Pill, 
-  Shield, 
   Lock, 
   Mail, 
   ArrowRight,
@@ -21,37 +22,15 @@ import {
   FileText
 } from 'lucide-react';
 
-function GoogleIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <path
-        fill="#4285F4"
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-      />
-      <path
-        fill="#34A853"
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-      />
-      <path
-        fill="#EA4335"
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-      />
-    </svg>
-  );
-}
-
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialRole = searchParams?.get('role') || 'doctor';
 
   const { login } = useAuth();
-  const [selectedRole, setSelectedRole] = useState(initialRole);
+  const [selectedRole, setSelectedRole] = useState(initialRole === 'admin' ? 'doctor' : initialRole);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('password123');
 
   const roleConfigs = {
     doctor: {
@@ -77,14 +56,6 @@ function LoginFormContent() {
       badge: "Hospital Pharmacy",
       defaultEmail: "pharmacy@medisaarthi.health",
       redirect: "/pharmacy/dashboard"
-    },
-    admin: {
-      title: "System Operations Console",
-      sub: "Manage kiosk fleet, analytics KPIs, and security audit logs.",
-      icon: Shield,
-      badge: "Hospital Admin",
-      defaultEmail: "admin@medisaarthi.health",
-      redirect: "/admin/dashboard"
     }
   };
 
@@ -95,26 +66,56 @@ function LoginFormContent() {
     setEmail(roleConfigs[r].defaultEmail);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login(selectedRole, { email: email || currentConfig.defaultEmail });
-    router.push(currentConfig.redirect);
+    const res = await login(selectedRole, { email: email || currentConfig.defaultEmail, password });
+    if (res.success) {
+      router.push(currentConfig.redirect);
+    } else {
+      alert(res.error);
+    }
   };
 
-  const handleGoogleSignIn = () => {
-    login(selectedRole, { email: email || currentConfig.defaultEmail });
-    router.push(currentConfig.redirect);
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const decoded = jwtDecode(credentialResponse.credential);
+      const res = await login(selectedRole, { 
+        email: decoded.email, 
+        password: '••••••••••••', 
+        name: decoded.name 
+      });
+      if (res.success) {
+        router.push(currentConfig.redirect);
+      } else {
+        alert(res.error);
+      }
+    } catch (error) {
+      console.error("Google sign in error", error);
+    }
   };
 
-  const handleDemoQuickLogin = (r) => {
+  const handleDemoQuickLogin = async (r) => {
     const config = roleConfigs[r];
-    login(r, { email: config.defaultEmail });
-    router.push(config.redirect);
+    const res = await login(r, { email: config.defaultEmail, password: 'password123' });
+    if (res.success) {
+      router.push(config.redirect);
+    } else {
+      alert(res.error);
+    }
+  };
+
+  const handleSeamlessSignup = async () => {
+    const res = await login(selectedRole, { email: email || currentConfig.defaultEmail, password });
+    if (res.success) {
+      router.push(currentConfig.redirect);
+    } else {
+      alert(res.error);
+    }
   };
 
   return (
     <main className="max-w-4xl lg:max-w-5xl w-full mx-auto my-3 bg-white dark:bg-black border border-slate-200/90 dark:border-[#27272a] rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative z-10">
-      {/* COLUMN 1: Brand Logo, Instructions & Highlights (Hidden on mobile, visible on lg screens) */}
+      {/* COLUMN 1: Brand Logo, Instructions & Highlights */}
       <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-b from-[#0F4C5C]/15 via-[#0F4C5C]/5 to-transparent border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-[#27272a] p-6 md:p-8 flex-col justify-between space-y-5">
         <div className="space-y-5">
           {/* Logo & Title Header */}
@@ -194,13 +195,12 @@ function LoginFormContent() {
           <p className="text-[11px] text-slate-500 dark:text-[#a1a1aa]">{currentConfig.sub}</p>
         </div>
 
-        {/* 4 Role Selector Tabs */}
-        <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-[#111111] rounded-xl border border-slate-200 dark:border-[#27272a]">
+        {/* 3 Role Selector Tabs (Admin Removed) */}
+        <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-[#111111] rounded-xl border border-slate-200 dark:border-[#27272a]">
           {[
             { id: 'doctor', label: 'Doctor', icon: UserCheck },
             { id: 'patient', label: 'Patient', icon: Hospital },
-            { id: 'pharmacy', label: 'Pharmacy', icon: Pill },
-            { id: 'admin', label: 'Admin', icon: Shield }
+            { id: 'pharmacy', label: 'Pharmacy', icon: Pill }
           ].map((item) => {
             const isSelected = selectedRole === item.id;
             const Icon = item.icon;
@@ -223,14 +223,19 @@ function LoginFormContent() {
         </div>
 
         {/* Google Sign-In Button */}
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          className="w-full py-2 px-3 bg-white dark:bg-[#111111] hover:bg-slate-50 dark:hover:bg-[#161616] text-slate-700 dark:text-slate-200 font-bold text-[11px] rounded-full border border-slate-200 dark:border-[#27272a] shadow-2xs hover:shadow-xs transition-all flex items-center justify-center gap-2 active:scale-98"
-        >
-          <GoogleIcon />
-          <span>Sign In with Google</span>
-        </button>
+        <div className="w-full flex justify-center py-1">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              console.log('Login Failed');
+            }}
+            useOneTap
+            shape="rectangular"
+            theme="filled_black"
+            text="signin_with"
+            width="100%"
+          />
+        </div>
 
         {/* OR Divider */}
         <div className="relative flex items-center justify-center">
@@ -266,7 +271,8 @@ function LoginFormContent() {
               <Lock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="password"
-                defaultValue="••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full pl-9 pr-3 py-2 text-[11px] bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-[#27272a] rounded-full text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#18A999]"
               />
@@ -278,12 +284,12 @@ function LoginFormContent() {
           </Button>
         </form>
 
-        {/* Quick Demo 1-Click Login Shortcuts */}
+        {/* Quick Demo 1-Click Login Shortcuts (Admin Removed) */}
         <div className="pt-2.5 border-t border-slate-100 dark:border-[#27272a] space-y-2">
           <p className="text-[9px] font-bold text-center text-[#18A999] uppercase tracking-wider">
             Quick 1-Click Demo Login:
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-3 gap-1.5">
             <button
               onClick={() => handleDemoQuickLogin('doctor')}
               className="p-1.5 rounded-lg bg-slate-50 dark:bg-[#111111] hover:bg-[#0F4C5C]/20 border border-slate-200 dark:border-[#27272a] text-[10px] font-bold text-slate-800 dark:text-white flex items-center justify-center gap-1 transition-all"
@@ -302,12 +308,6 @@ function LoginFormContent() {
             >
               Pharmacy
             </button>
-            <button
-              onClick={() => handleDemoQuickLogin('admin')}
-              className="p-1.5 rounded-lg bg-slate-50 dark:bg-[#111111] hover:bg-[#0F4C5C]/20 border border-slate-200 dark:border-[#27272a] text-[10px] font-bold text-slate-800 dark:text-white flex items-center justify-center gap-1 transition-all"
-            >
-              Admin
-            </button>
           </div>
 
           <div className="text-center pt-1">
@@ -323,21 +323,24 @@ function LoginFormContent() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white flex flex-col justify-center items-center p-3 sm:p-4 md:p-6 relative overflow-hidden">
-      {/* Glow & Gridlines */}
-      <div className="absolute top-10 left-10 w-80 h-80 bg-[#18A999]/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#6366F1]/15 rounded-full blur-3xl pointer-events-none" />
-      <div 
-        className="absolute inset-0 bg-grid-pattern opacity-85 dark:opacity-60 pointer-events-none"
-        style={{
-          maskImage: "radial-gradient(ellipse at center, black 50%, transparent 90%)",
-          WebkitMaskImage: "radial-gradient(ellipse at center, black 50%, transparent 90%)"
-        }}
-      />
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1047124190772-23v55cpt6b306ktt20dsqd70c9n0er8r.apps.googleusercontent.com'}>
+      <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white flex flex-col justify-center items-center p-3 sm:p-4 md:p-6 relative overflow-hidden">
+        {/* Glow & Gridlines */}
+        <div className="absolute top-10 left-10 w-80 h-80 bg-[#18A999]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#6366F1]/15 rounded-full blur-3xl pointer-events-none" />
+        <div 
+          className="absolute inset-0 bg-grid-pattern opacity-85 dark:opacity-60 pointer-events-none"
+          style={{
+            maskImage: "radial-gradient(ellipse at center, black 50%, transparent 90%)",
+            WebkitMaskImage: "radial-gradient(ellipse at center, black 50%, transparent 90%)"
+          }}
+        />
 
-      <Suspense fallback={<div className="p-8 text-center text-slate-400 text-xs">Loading Login...</div>}>
-        <LoginFormContent />
-      </Suspense>
-    </div>
+        <Suspense fallback={<div className="p-8 text-center text-slate-400 text-xs">Loading Login...</div>}>
+          <LoginFormContent />
+        </Suspense>
+      </div>
+    </GoogleOAuthProvider>
   );
 }
+
