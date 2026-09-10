@@ -129,7 +129,7 @@ export function AuthProvider({ children }) {
    */
   const signup = useCallback(async ({ name, email, password, role, phone, age, gender, preferredLanguage }) => {
     try {
-      const data = await authApi.register({ name, email, password, role: (role || 'patient').toUpperCase(), phone, age, gender, preferredLanguage });
+      const data = await authApi.register({ name, email, password, role, phone, age, gender, preferredLanguage });
       if (!data?.token || !data?.user) {
         return { success: false, error: 'Registration failed. Invalid response from server.' };
       }
